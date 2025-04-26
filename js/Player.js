@@ -610,8 +610,8 @@ export class Player {
         
         // Only rotate when there is significant movement
         if (velocityMagnitude > 10) {
-            // Calculate the angle of movement
-            const movementAngle = Math.atan2(this.velocity.y, this.velocity.x);
+            // Calculate the angle of movement - invert the x to fix left/right orientation
+            const movementAngle = Math.atan2(this.velocity.y, -this.velocity.x);
             
             // Make robot's head point in the direction of movement
             // We set z rotation to match movement direction
@@ -869,7 +869,9 @@ export class Player {
             if (this.robot) {
                 const escapeQuaternion = new THREE.Quaternion();
                 // Point robot's head in the direction of movement (away from black hole)
-                escapeQuaternion.setFromEuler(new THREE.Euler(0, 0, angle + Math.PI/2));
+                // Use -dx to be consistent with the fix in update3DModel
+                const escapeAngle = Math.atan2(dy, -dx);
+                escapeQuaternion.setFromEuler(new THREE.Euler(0, 0, escapeAngle + Math.PI/2));
                 this.robot.quaternion.copy(escapeQuaternion);
             }
 
