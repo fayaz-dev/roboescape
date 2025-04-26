@@ -58,13 +58,13 @@ export class Player {
         this.x = sceneManager.centerX;
         this.y = sceneManager.height - 100;
         
-        // Calculate robot size based on 5% of the maximum dimension
+        // Calculate robot size based on 25% of the maximum dimension
         const maxDimension = Math.max(sceneManager.width, sceneManager.height);
-        this.robotSizeRatio = 0.25; // 25% of max dimension
+        this.robotSizeRatio = 0.25; // Set to 25% of max dimension
         this.robotSize = Math.round(maxDimension * this.robotSizeRatio);
         
-        // Scale collision radius proportionally
-        this.radius = this.robotSize / 9;
+        // Scale collision radius proportionally, but larger to match visual size
+        this.radius = this.robotSize / 3; // Maintain the /3 ratio to ensure head collects particles
         
         // Initialize 3D rendering
         this.setup3DScene();
@@ -83,7 +83,7 @@ export class Player {
     updateRobotSize() {
         const maxDimension = Math.max(this.sceneManager.width, this.sceneManager.height);
         this.robotSize = Math.round(maxDimension * this.robotSizeRatio);
-        this.radius = this.robotSize / 9;
+        this.radius = this.robotSize / 3; // Increased from /9 to /3 to match visual size
     }
     
     updateColors(colorScheme) {
