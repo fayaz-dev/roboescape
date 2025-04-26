@@ -51,6 +51,11 @@ export class Player {
         // Universe rotation properties
         this.affectedByRotation = true; // By default, player is affected by universe rotation
         this.rotationVelocity = { x: 0, y: 0 }; // Store rotation-induced velocity separately
+        
+        // Movement orientation properties
+        this.lastMovementAngle = 0; // Track the last movement direction
+        this.rotationResponseFactor = 0.05; // How fast the robot rotates to face movement direction
+        this.tiltFactor = 0.2; // Maximum tilt angle when moving (in radians)
     }
     
     init(sceneManager) {
@@ -291,7 +296,7 @@ export class Player {
         const jetpackBody = new THREE.Mesh(jetpackGeometry, jetpackMaterial);
         this.jetpack.add(jetpackBody);
         
-        // Jetpack thrusters
+        // Jetpack thrusters (main vertical thrusters)
         const thrusterGeometry = new THREE.CylinderGeometry(0.12, 0.1, 0.4, 8);
         const thrusterMaterial = new THREE.MeshPhongMaterial({
             color: 0x666666,
@@ -306,7 +311,28 @@ export class Player {
         rightThruster.position.set(-0.2, -0.3, 0);
         this.jetpack.add(rightThruster);
         
-        // Jetpack flames (will be shown when moving)
+        // Add maneuvering thrusters for realistic space movement
+        const smallThrusterGeometry = new THREE.CylinderGeometry(0.06, 0.05, 0.2, 8);
+        
+        // Left side horizontal thruster
+        const leftSideThruster = new THREE.Mesh(smallThrusterGeometry, thrusterMaterial);
+        leftSideThruster.rotation.z = Math.PI/2; // Point horizontally
+        leftSideThruster.position.set(0.4, 0, 0);
+        this.jetpack.add(leftSideThruster);
+        
+        // Right side horizontal thruster
+        const rightSideThruster = new THREE.Mesh(smallThrusterGeometry, thrusterMaterial);
+        rightSideThruster.rotation.z = -Math.PI/2; // Point horizontally
+        rightSideThruster.position.set(-0.4, 0, 0);
+        this.jetpack.add(rightSideThruster);
+        
+        // Forward thruster (for backward movement)
+        const frontThruster = new THREE.Mesh(smallThrusterGeometry, thrusterMaterial);
+        frontThruster.rotation.x = Math.PI/2; // Point forward
+        frontThruster.position.set(0, 0, 0.2);
+        this.jetpack.add(frontThruster);
+        
+        // Jetpack flames groups for directional thrusters
         this.jetpackFlame = new THREE.Group();
         
         // Create flame geometry
@@ -317,17 +343,47 @@ export class Player {
             opacity: 0.8
         });
         
-        const leftFlame = new THREE.Mesh(flameGeometry, flameMaterial);
+        // Main vertical flames
+        const leftFlame = new THREE.Mesh(flameGeometry, flameMaterial.clone());
         leftFlame.position.set(0.2, -0.5, 0);
         leftFlame.rotation.x = Math.PI;
+        leftFlame.name = "mainLeft";
         this.jetpackFlame.add(leftFlame);
         
-        const rightFlame = new THREE.Mesh(flameGeometry, flameMaterial);
+        const rightFlame = new THREE.Mesh(flameGeometry, flameMaterial.clone());
         rightFlame.position.set(-0.2, -0.5, 0);
         rightFlame.rotation.x = Math.PI;
+        rightFlame.name = "mainRight";
         this.jetpackFlame.add(rightFlame);
         
-        // Initially hide flames
+        // Create maneuvering flames with smaller size
+        const smallFlameGeometry = new THREE.ConeGeometry(0.06, 0.25, 8);
+        
+        // Left side flame (for rightward movement)
+        const leftSideFlame = new THREE.Mesh(smallFlameGeometry, flameMaterial.clone());
+        leftSideFlame.position.set(0.5, 0, 0);
+        leftSideFlame.rotation.z = -Math.PI/2;
+        leftSideFlame.name = "sideLeft";
+        leftSideFlame.visible = false; // Only show when needed
+        this.jetpackFlame.add(leftSideFlame);
+        
+        // Right side flame (for leftward movement)
+        const rightSideFlame = new THREE.Mesh(smallFlameGeometry, flameMaterial.clone());
+        rightSideFlame.position.set(-0.5, 0, 0);
+        rightSideFlame.rotation.z = Math.PI/2;
+        rightSideFlame.name = "sideRight";
+        rightSideFlame.visible = false; // Only show when needed
+        this.jetpackFlame.add(rightSideFlame);
+        
+        // Forward flame (for backward movement)
+        const forwardFlame = new THREE.Mesh(smallFlameGeometry, flameMaterial.clone());
+        forwardFlame.position.set(0, 0, 0.3);
+        forwardFlame.rotation.x = -Math.PI/2;
+        forwardFlame.name = "forward";
+        forwardFlame.visible = false; // Only show when needed
+        this.jetpackFlame.add(forwardFlame);
+        
+        // Initially hide all flames
         this.jetpackFlame.visible = false;
         
         // Add flames to jetpack
@@ -518,38 +574,74 @@ export class Player {
     }
     
     update3DModel() {
-        // Show jetpack flames when moving with jetpack commands
+        // Check if any direction key is pressed
         const isUsingJetpack = this.isMoving.up || this.isMoving.down || 
                            this.isMoving.left || this.isMoving.right;
+        
+        // Set overall visibility of jetpack flames
         this.jetpackFlame.visible = isUsingJetpack;
         
-        // Rotate robot based on movement direction
-        if (Math.abs(this.velocity.x) > 5) {
-            // Lean left or right when moving horizontally
-            const targetRotation = -this.velocity.x * 0.0001;
-            this.robot.rotation.z = THREE.MathUtils.lerp(
-                this.robot.rotation.z, 
-                targetRotation, 
-                0.1
-            );
-        } else {
-            // Return to upright position
-            this.robot.rotation.z = THREE.MathUtils.lerp(
-                this.robot.rotation.z, 
-                0, 
-                0.1
-            );
+        if (isUsingJetpack) {
+            // Control individual flames based on movement direction
+            // Find the main thruster flames
+            const mainLeftFlame = this.jetpackFlame.children.find(child => child.name === "mainLeft");
+            const mainRightFlame = this.jetpackFlame.children.find(child => child.name === "mainRight");
+            const leftSideFlame = this.jetpackFlame.children.find(child => child.name === "sideLeft");
+            const rightSideFlame = this.jetpackFlame.children.find(child => child.name === "sideRight");
+            const forwardFlame = this.jetpackFlame.children.find(child => child.name === "forward");
+            
+            // Main vertical thrusters are active when moving up
+            if (mainLeftFlame) mainLeftFlame.visible = this.isMoving.up;
+            if (mainRightFlame) mainRightFlame.visible = this.isMoving.up;
+            
+            // Side thrusters activate in opposite direction of movement
+            if (leftSideFlame) leftSideFlame.visible = this.isMoving.right;  // Right movement activates left thruster
+            if (rightSideFlame) rightSideFlame.visible = this.isMoving.left; // Left movement activates right thruster
+            
+            // Forward thruster activates when moving down (backward)
+            if (forwardFlame) forwardFlame.visible = this.isMoving.down;
         }
         
-        // Tilt forward/backward based on vertical movement
-        if (Math.abs(this.velocity.y) > 5) {
-            const targetRotation = this.velocity.y * 0.0001;
+        // Calculate movement vector magnitude
+        const velocityMagnitude = Math.sqrt(
+            this.velocity.x * this.velocity.x + 
+            this.velocity.y * this.velocity.y
+        );
+        
+        // Only rotate when there is significant movement
+        if (velocityMagnitude > 10) {
+            // Calculate the angle of movement
+            const movementAngle = Math.atan2(this.velocity.y, this.velocity.x);
+            
+            // Make robot's head point in the direction of movement
+            // We set z rotation to match movement direction
+            // In THREE.js, z rotation is the one used for 2D plane rotations
+            const targetRotation = movementAngle + Math.PI/2; // Add 90° to align head with movement direction
+            
+            // Use quaternions for smoother 3D rotation
+            const targetQuaternion = new THREE.Quaternion();
+            targetQuaternion.setFromEuler(new THREE.Euler(0, 0, targetRotation));
+            
+            // Smoothly interpolate current rotation to target rotation
+            this.robot.quaternion.slerp(targetQuaternion, 0.1); // Increased from 0.05 for faster response
+            
+            // Slightly tilt the robot in the direction of movement for visual effect
+            const tiltAngle = 0.2; // Maximum tilt angle in radians
+            const tiltDirection = Math.sin(movementAngle - this.robot.rotation.z);
+            
+            // Apply tilt along the appropriate axis
             this.robot.rotation.x = THREE.MathUtils.lerp(
-                this.robot.rotation.x, 
-                targetRotation, 
+                this.robot.rotation.x,
+                tiltDirection * tiltAngle * (velocityMagnitude / this.maxSpeed),
                 0.1
             );
         } else {
+            // If not moving much, gradually return to default orientation
+            this.robot.quaternion.slerp(
+                new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0)), 
+                0.05
+            );
+            
             this.robot.rotation.x = THREE.MathUtils.lerp(
                 this.robot.rotation.x, 
                 0, 
@@ -559,22 +651,96 @@ export class Player {
         
         // Add universe rotation to the robot model if affected by rotation
         if (this.affectedByRotation) {
-            this.robot.rotation.y = this.sceneManager.universeRotationAngle;
+            // Create a quaternion for the universe rotation
+            const universeRotationQuat = new THREE.Quaternion();
+            universeRotationQuat.setFromAxisAngle(
+                new THREE.Vector3(0, 1, 0), // Rotate around Y axis
+                this.sceneManager.universeRotationAngle
+            );
+            
+            // Apply universe rotation to the robot's current orientation
+            // This preserves any orientation from movement while adding universe spin
+            this.robot.quaternion.premultiply(universeRotationQuat);
         }
         
-        // Pulsate flames if visible
+        // Enhance jetpack flames based on movement speed and direction
         if (this.jetpackFlame.visible) {
-            const pulseScale = 0.8 + Math.sin(Date.now() * 0.01) * 0.2;
-            this.jetpackFlame.scale.set(pulseScale, pulseScale * 1.2, pulseScale);
+            // Calculate movement intensity (0 to 1)
+            const velocityMagnitude = Math.sqrt(
+                this.velocity.x * this.velocity.x + 
+                this.velocity.y * this.velocity.y
+            );
+            const movementIntensity = Math.min(1, velocityMagnitude / this.maxSpeed);
             
-            // Change flame color randomly for effect
-            if (Math.random() > 0.8) {
+            // Apply flame effects to each visible flame
+            this.jetpackFlame.children.forEach(flame => {
+                if (!flame.visible) return;
+                
+                // Calculate specific intensity based on direction
+                let directionIntensity = movementIntensity;
+                let lengthMultiplier = 1.0;
+                
+                // Adjust flame intensity based on specific direction
+                if (flame.name === "mainLeft" || flame.name === "mainRight") {
+                    // Vertical flames stronger when moving upward
+                    directionIntensity = this.isMoving.up ? movementIntensity * 1.2 : 0.6;
+                    lengthMultiplier = 1.5; // Longer vertical flames
+                } else if (flame.name === "sideLeft") {
+                    // Left thruster stronger when moving right
+                    directionIntensity = this.isMoving.right ? movementIntensity * 1.2 : 0.7;
+                    lengthMultiplier = 1.2;
+                } else if (flame.name === "sideRight") {
+                    // Right thruster stronger when moving left
+                    directionIntensity = this.isMoving.left ? movementIntensity * 1.2 : 0.7;
+                    lengthMultiplier = 1.2;
+                } else if (flame.name === "forward") {
+                    // Forward thruster stronger when moving down
+                    directionIntensity = this.isMoving.down ? movementIntensity * 1.2 : 0.7;
+                    lengthMultiplier = 1.3;
+                }
+                
+                // Make flame size responsive to velocity with randomized pulsing
+                const baseScale = 0.8 + (directionIntensity * 0.6);
+                const pulseScale = baseScale + Math.sin((Date.now() + Math.random() * 500) * 0.01) * 0.2;
+                
+                // Scale flame with direction-specific length
+                // Each flame has its own scale based on its orientation
+                if (flame.name.includes("main")) {
+                    // Main vertical flames
+                    flame.scale.set(
+                        pulseScale, 
+                        pulseScale * (1.2 + directionIntensity * lengthMultiplier), 
+                        pulseScale
+                    );
+                } else if (flame.name.includes("side")) {
+                    // Side horizontal flames - x scale affects length
+                    flame.scale.set(
+                        pulseScale * (1.2 + directionIntensity * lengthMultiplier),
+                        pulseScale,
+                        pulseScale
+                    );
+                } else if (flame.name === "forward") {
+                    // Forward flame - z scale affects length
+                    flame.scale.set(
+                        pulseScale,
+                        pulseScale,
+                        pulseScale * (1.2 + directionIntensity * lengthMultiplier)
+                    );
+                }
+                
+                // Dynamic flame color based on intensity
                 const flameColors = [0xff6600, 0xff9900, 0xffcc00];
-                const randomColor = flameColors[Math.floor(Math.random() * flameColors.length)];
-                this.jetpackFlame.children.forEach(flame => {
-                    flame.material.color.setHex(randomColor);
-                });
-            }
+                // More intense flames are more yellow/white
+                const colorIndex = Math.min(2, Math.floor(directionIntensity * 3));
+                
+                // Randomly change colors with flickering effect
+                if (Math.random() > 0.85) {
+                    const randomColor = flameColors[colorIndex];
+                    if (flame.material) {
+                        flame.material.color.setHex(randomColor);
+                    }
+                }
+            });
         }
     }
     
@@ -695,10 +861,22 @@ export class Player {
             const escapeSpeed = this.maxSpeed * 3;
             this.velocity.x = Math.cos(angle) * escapeSpeed;
             this.velocity.y = Math.sin(angle) * escapeSpeed;
+            
+            // Store this as the last movement angle for proper orientation
+            this.lastMovementAngle = angle;
+            
+            // Immediately rotate robot to face the escape direction
+            if (this.robot) {
+                const escapeQuaternion = new THREE.Quaternion();
+                // Point robot's head in the direction of movement (away from black hole)
+                escapeQuaternion.setFromEuler(new THREE.Euler(0, 0, angle + Math.PI/2));
+                this.robot.quaternion.copy(escapeQuaternion);
+            }
 
             // Show intense jetpack flames
             if (this.jetpackFlame) {
-                this.jetpackFlame.scale.set(4.5, 4.5, 4.5); // Increased flame size for larger robot
+                // Make the flames appear more powerful and elongated for escape boost
+                this.jetpackFlame.scale.set(4.0, 6.0, 4.0); // Emphasize length for directional thrust
             }
             
             // Reset drag immediately to default when escaping
@@ -706,7 +884,10 @@ export class Player {
             
             // Dispatch event for escape boost
             window.dispatchEvent(new CustomEvent('playerEscaped'));
+            
+            return true;
         }
+        return false;
     }
 
     checkCollision(object) {
@@ -738,8 +919,14 @@ export class Player {
         // Update robot size in case window size changed
         this.updateRobotSize();
         
+        // Reset movement direction tracking
+        this.lastMovementAngle = 0;
+        
         if (this.robot) {
+            // Reset all rotations
             this.robot.rotation.set(0, 0, 0);
+            // Reset quaternion to identity (no rotation)
+            this.robot.quaternion.set(0, 0, 0, 1);
         }
     }
 }
