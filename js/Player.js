@@ -607,7 +607,9 @@ export class Player {
     }
     
     constrainToBounds() {
-        const margin = this.radius;
+        // Use a small margin to allow the robot to get closer to the edges
+        // Allow the robot's visual edges to reach screen edges
+        const margin = 5; // Small margin to prevent going completely off-screen
         
         // Only constrain to screen edges, not near the black hole center
         if (this.x < margin) {
