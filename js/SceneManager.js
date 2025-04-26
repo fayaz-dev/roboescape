@@ -19,6 +19,15 @@ export class SceneManager {
         // Universe rotation properties
         this.universeRotationAngle = 0;
         this.universeRotationSpeed = 0.001; // radians per second
+        
+        // Set up event listener for window resizing
+        window.addEventListener('resize', () => {
+            this.handleResize();
+            // Dispatch a custom event that components can listen for
+            window.dispatchEvent(new CustomEvent('gameResize', {
+                detail: { width: this.width, height: this.height }
+            }));
+        });
     }
     
     handleResize() {

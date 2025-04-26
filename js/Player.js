@@ -4,7 +4,8 @@ export class Player {
     constructor() {
         this.x = 0;
         this.y = 0;
-        this.radius = 45; // Tripled radius for collision detection to match robot's larger size
+        this.robotSize = 300; // Default size, will be updated in init based on window size
+        this.radius = 45; // Default radius, will be updated in init
         this.speed = 200; // Acceleration force when keys are pressed
         this.velocity = { x: 0, y: 0 };
         this.drag = 0.98; // Increased from 0.95 to reduce friction in space
@@ -57,6 +58,14 @@ export class Player {
         this.x = sceneManager.centerX;
         this.y = sceneManager.height - 100;
         
+        // Calculate robot size based on 5% of the maximum dimension
+        const maxDimension = Math.max(sceneManager.width, sceneManager.height);
+        this.robotSizeRatio = 0.25; // 25% of max dimension
+        this.robotSize = Math.round(maxDimension * this.robotSizeRatio);
+        
+        // Scale collision radius proportionally
+        this.radius = this.robotSize / 9;
+        
         // Initialize 3D rendering
         this.setup3DScene();
         
@@ -64,6 +73,17 @@ export class Player {
         window.addEventListener('playerColorChange', (event) => {
             this.updateColors(event.detail);
         });
+        
+        // Listen for game resize events to update robot size
+        window.addEventListener('gameResize', () => {
+            this.updateRobotSize();
+        });
+    }
+    
+    updateRobotSize() {
+        const maxDimension = Math.max(this.sceneManager.width, this.sceneManager.height);
+        this.robotSize = Math.round(maxDimension * this.robotSizeRatio);
+        this.radius = this.robotSize / 9;
     }
     
     updateColors(colorScheme) {
@@ -97,7 +117,7 @@ export class Player {
             alpha: true, // Transparent background
             antialias: true 
         });
-        this.renderer.setSize(300, 300); // Will be updated in draw method
+        this.renderer.setSize(this.robotSize, this.robotSize); // Use dynamic size
         
         // Create robot model
         this.createRobotModel();
@@ -560,7 +580,7 @@ export class Player {
     
     draw() {
         // Render the 3D model to an offscreen canvas
-        this.renderer.setSize(300, 300); // Size of robot renderer (tripled)
+        this.renderer.setSize(this.robotSize, this.robotSize); // Use dynamic size
         this.renderer.render(this.scene, this.camera);
         
         // Draw to the main canvas
@@ -570,9 +590,9 @@ export class Player {
         ctx.save();
         ctx.drawImage(
             this.renderer.domElement,
-            this.x - 150, // Center horizontally (tripled)
-            this.y - 150, // Center vertically (tripled)
-            300, 300 // Size of the robot on screen (tripled)
+            this.x - this.robotSize / 2, // Center horizontally
+            this.y - this.robotSize / 2, // Center vertically
+            this.robotSize, this.robotSize // Dynamic size
         );
         ctx.restore();
         
@@ -712,6 +732,9 @@ export class Player {
         this.lastShardLossTime = 0;
         // Reset the drag to default value
         this.drag = this.defaultDrag;
+        
+        // Update robot size in case window size changed
+        this.updateRobotSize();
         
         if (this.robot) {
             this.robot.rotation.set(0, 0, 0);
