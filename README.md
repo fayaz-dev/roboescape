@@ -37,6 +37,4 @@ npm run dev
 - Vite (for development tooling)
 
 ## Credits
-- Design & Development: [Your Name]
-- Music & Sound Effects: Creative Commons sources
-- Inspiration: Classic arcade space games
+- Design & Development: Fayaz Ahmed
