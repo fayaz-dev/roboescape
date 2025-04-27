@@ -35,6 +35,11 @@
             transition: opacity 0.3s ease;
         }
         
+        /* Ensure other panels appear on top of the end-game-feedback when shown */
+        .leaderboard-panel, .home-settings-panel {
+            z-index: 30;
+        }
+        
         .feedback-content {
             background: linear-gradient(45deg, #000022, #000066);
             border-radius: 15px;
@@ -89,6 +94,7 @@
         
         .feedback-buttons {
             margin-top: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .play-again-button {
@@ -107,6 +113,15 @@
         .play-again-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 30px rgba(0, 200, 255, 0.7);
+        }
+        
+        /* Make sure menu buttons in feedback panel look the same as home page */
+        .end-game-feedback .menu-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            justify-content: center;
         }
         
         /* Home Page Styles */
@@ -271,7 +286,7 @@
             color: #fff;
             padding: 20px;
             box-shadow: 0 0 30px rgba(0, 102, 255, 0.5);
-            z-index: 20;
+            z-index: 21;
             display: none;
         }
         

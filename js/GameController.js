@@ -39,6 +39,19 @@ export class GameController {
             this.restart();
         });
         
+        // Add handlers for settings and leaderboard buttons
+        this.endGameFeedback.setSettingsHandler(() => {
+            // Show settings panel
+            const settingsPanel = document.getElementById('home-settings-panel');
+            settingsPanel.style.display = 'block';
+        });
+        
+        this.endGameFeedback.setLeaderboardHandler(() => {
+            // Show leaderboard panel
+            const leaderboardPanel = document.getElementById('leaderboard-panel');
+            leaderboardPanel.style.display = 'block';
+        });
+        
         this.setupControls();
 
         // Listen for player destruction event
@@ -266,6 +279,12 @@ export class GameController {
         
         // Reset blackhole using its dedicated reset method
         this.blackHole.reset();
+        
+        // Hide any open panels that might be visible
+        const leaderboardPanel = document.getElementById('leaderboard-panel');
+        const settingsPanel = document.getElementById('home-settings-panel');
+        if (leaderboardPanel) leaderboardPanel.style.display = 'none';
+        if (settingsPanel) settingsPanel.style.display = 'none';
         
         // Play intro animation when restarting
         this.playIntroAnimation();

@@ -48,9 +48,26 @@ export class EndGameFeedback {
         this.playAgainButton.textContent = 'PLAY AGAIN';
         buttonContainer.appendChild(this.playAgainButton);
         
+        // Create menu buttons container (similar to home page)
+        const menuButtons = document.createElement('div');
+        menuButtons.className = 'menu-buttons';
+        
+        // Create settings button
+        this.settingsButton = document.createElement('button');
+        this.settingsButton.className = 'menu-button';
+        this.settingsButton.textContent = 'Settings';
+        menuButtons.appendChild(this.settingsButton);
+        
+        // Create leaderboard button
+        this.leaderboardButton = document.createElement('button');
+        this.leaderboardButton.className = 'menu-button';
+        this.leaderboardButton.textContent = 'Leaderboard';
+        menuButtons.appendChild(this.leaderboardButton);
+        
         // Add all elements to the panel
         this.panel.appendChild(contentContainer);
         this.panel.appendChild(buttonContainer);
+        this.panel.appendChild(menuButtons);
         
         // Add the panel to the body
         document.body.appendChild(this.panel);
@@ -137,6 +154,46 @@ export class EndGameFeedback {
         this.playAgainButton.addEventListener('click', () => {
             this.hidePanel();
             handler();
+        });
+    }
+    
+    setSettingsHandler(handler) {
+        this.settingsButton.addEventListener('click', () => {
+            // Semi-hide this panel to show settings
+            this.panel.style.opacity = '0.3';
+            handler();
+            
+            // Find settings panel close button and add a listener to restore this panel
+            const settingsCloseButton = document.getElementById('settings-close');
+            if (settingsCloseButton) {
+                const originalOnclick = settingsCloseButton.onclick;
+                settingsCloseButton.onclick = (e) => {
+                    // Run original close handler if it exists
+                    if (originalOnclick) originalOnclick.call(settingsCloseButton, e);
+                    // Restore this panel
+                    this.panel.style.opacity = '1';
+                };
+            }
+        });
+    }
+    
+    setLeaderboardHandler(handler) {
+        this.leaderboardButton.addEventListener('click', () => {
+            // Semi-hide this panel to show leaderboard
+            this.panel.style.opacity = '0.3';
+            handler();
+            
+            // Find leaderboard panel close button and add a listener to restore this panel
+            const leaderboardCloseButton = document.getElementById('leaderboard-close');
+            if (leaderboardCloseButton) {
+                const originalOnclick = leaderboardCloseButton.onclick;
+                leaderboardCloseButton.onclick = (e) => {
+                    // Run original close handler if it exists
+                    if (originalOnclick) originalOnclick.call(leaderboardCloseButton, e);
+                    // Restore this panel
+                    this.panel.style.opacity = '1';
+                };
+            }
         });
     }
 }
