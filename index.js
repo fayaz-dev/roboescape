@@ -5,10 +5,12 @@ import { BlackHole } from './js/BlackHole.js';
 import { Starfield } from './js/Starfield.js';
 import { ExoticParticles } from './js/ExoticParticles.js';
 import { Settings } from './js/Settings.js';
+import { HomeBackground } from './js/HomeBackground.js';
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
     const homePage = document.getElementById('home-page');
+    const homeBackgroundCanvas = document.getElementById('home-background');
     const startButton = document.getElementById('start-button');
     const settingsButton = document.getElementById('settings-button');
     const leaderboardButton = document.getElementById('leaderboard-button');
@@ -17,6 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeSettingsPanel = document.getElementById('home-settings-panel');
     const settingsClose = document.getElementById('settings-close');
     const leaderboardList = document.getElementById('leaderboard-list');
+    
+    // Initialize home page background animation
+    const homeBackground = new HomeBackground(homeBackgroundCanvas);
+    
+    // Set background canvas size
+    homeBackgroundCanvas.width = window.innerWidth;
+    homeBackgroundCanvas.height = window.innerHeight;
     
     let gameController;
     let gameInitialized = false;
@@ -32,11 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
     leaderboardClose.addEventListener('click', toggleLeaderboard);
     settingsClose.addEventListener('click', toggleSettings);
     
+    // Initialize home background animation
+    homeBackground.init();
+    
     // Handle window resize
     window.addEventListener('resize', () => {
         if (gameInitialized) {
             gameController.sceneManager.handleResize();
         }
+        
+        // Resize home background canvas
+        homeBackgroundCanvas.width = window.innerWidth;
+        homeBackgroundCanvas.height = window.innerHeight;
+        homeBackground.resize();
     });
     
     // Preload and initialize the game in the background
@@ -88,13 +105,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handleGameOver(score, time) {
-        // Show home page again
-        homePage.style.display = 'flex';
+        // Show home page again with animation
+        homePage.style.opacity = 0;
+        homePage.style.display = 'block';
+        
+        // Fade in the home page
+        let opacity = 0;
+        const fadeInterval = setInterval(() => {
+            opacity += 0.05;
+            homePage.style.opacity = opacity;
+            
+            if (opacity >= 1) {
+                clearInterval(fadeInterval);
+            }
+        }, 30);
         
         // Update leaderboard with new score
         updateLeaderboard(score, time);
         
-        // Change start button text to "Play Again"
+        // Change start button text to "PLAY AGAIN"
         startButton.textContent = "PLAY AGAIN";
     }
     
