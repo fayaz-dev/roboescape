@@ -60,8 +60,10 @@ export class Player {
     
     init(sceneManager) {
         this.sceneManager = sceneManager;
-        this.x = sceneManager.centerX;
-        this.y = sceneManager.height - 100;
+        // Position the robot on the far left side of the screen with a small padding
+        const leftPadding = 50; // Small padding from the left edge
+        this.x = leftPadding + this.radius; // Add radius to ensure robot is fully visible
+        this.y = sceneManager.centerY; // Place at vertical center
         
         // Calculate robot size based on 25% of the maximum dimension
         const maxDimension = Math.max(sceneManager.width, sceneManager.height);
@@ -905,8 +907,10 @@ export class Player {
     }
     
     reset() {
-        this.x = this.sceneManager.centerX;
-        this.y = this.sceneManager.height - 100;
+        // Position the robot on the far left side of the screen with a small padding
+        const leftPadding = 50; // Small padding from the left edge
+        this.x = leftPadding + this.radius; // Add radius to ensure robot is fully visible
+        this.y = this.sceneManager.centerY; // Place at vertical center
         this.velocity = { x: 0, y: 0 };
         this.rotationVelocity = { x: 0, y: 0 };
         this.isMoving = {
