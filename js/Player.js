@@ -40,8 +40,8 @@ export class Player {
         
         // Default colors (will be updated by settings if available)
         this.colors = {
-            bodyColor: 0xffffff,
-            helmetColor: 0xdddddd
+            bodyColor: 0x0077ff, // Vibrant Blue
+            helmetColor: 0xffd700 // Gold
         };
         
         // Store materials for color updates
@@ -146,50 +146,55 @@ export class Player {
         this.robot = new THREE.Group();
         
         // Create robot head
-        const headGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        this.helmetMaterial = new THREE.MeshPhongMaterial({
+        const headGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // Keep geometry simple
+        // Use MeshStandardMaterial for better PBR rendering
+        this.helmetMaterial = new THREE.MeshStandardMaterial({
             color: this.colors.helmetColor,
-            metalness: 0.8,
-            roughness: 0.2,
-            shininess: 100
+            metalness: 0.9, // More metallic
+            roughness: 0.1, // Smoother, shinier surface
+            envMapIntensity: 1.5 // Enhance reflections if env map is present
         });
         const head = new THREE.Mesh(headGeometry, this.helmetMaterial);
         head.position.y = 0.9;
         this.robot.add(head);
         
-        // Create robot eyes
-        const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
-        const eyeMaterial = new THREE.MeshPhongMaterial({
+        // Create robot eyes - make them larger and brighter
+        const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Slightly larger eyes
+        const eyeMaterial = new THREE.MeshStandardMaterial({
             color: 0x00ffff, // Cyan glowing eyes
-            emissive: 0x00ffff,
-            emissiveIntensity: 0.7,
-            shininess: 100
+            emissive: 0x00ffff, // Make them glow
+            emissiveIntensity: 1.5, // Brighter glow
+            metalness: 0.1,
+            roughness: 0.3
         });
         
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(0.15, 0.95, 0.25);
+        leftEye.position.set(0.15, 0.95, 0.26); // Adjust z slightly forward
         this.robot.add(leftEye);
         
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(-0.15, 0.95, 0.25);
+        rightEye.position.set(-0.15, 0.95, 0.26); // Adjust z slightly forward
         this.robot.add(rightEye);
         
         // Create antenna
         const antennaGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8);
-        const antennaMaterial = new THREE.MeshPhongMaterial({
-            color: 0x888888,
-            metalness: 0.8
+        const antennaMaterial = new THREE.MeshStandardMaterial({ // Use Standard Material
+            color: 0xaaaaaa, // Lighter grey
+            metalness: 0.9,
+            roughness: 0.2
         });
         const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
         antenna.position.set(0, 1.25, 0);
         this.robot.add(antenna);
         
-        // Create antenna tip
-        const antennaTipGeometry = new THREE.SphereGeometry(0.04, 8, 8);
-        const antennaTipMaterial = new THREE.MeshPhongMaterial({
+        // Create antenna tip - make it glow brighter
+        const antennaTipGeometry = new THREE.SphereGeometry(0.05, 16, 16); // Slightly larger tip
+        const antennaTipMaterial = new THREE.MeshStandardMaterial({ // Use Standard Material
             color: 0xff0000,
             emissive: 0xff0000,
-            emissiveIntensity: 0.5
+            emissiveIntensity: 2.0, // Much brighter glow
+            metalness: 0.2,
+            roughness: 0.5
         });
         const antennaTip = new THREE.Mesh(antennaTipGeometry, antennaTipMaterial);
         antennaTip.position.set(0, 1.35, 0);
@@ -197,44 +202,48 @@ export class Player {
         
         // Create robot body
         const bodyGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.4);
-        this.bodyMaterial = new THREE.MeshPhongMaterial({
+        // Use MeshStandardMaterial for body
+        this.bodyMaterial = new THREE.MeshStandardMaterial({
             color: this.colors.bodyColor,
-            metalness: 0.6,
-            shininess: 70
+            metalness: 0.7, // Metallic look
+            roughness: 0.3, // Moderately smooth
+            envMapIntensity: 1.2
         });
         const body = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
         body.position.y = 0.3;
         this.robot.add(body);
         
-        // Create chest panel
+        // Create chest panel - make it darker and slightly reflective
         const panelGeometry = new THREE.PlaneGeometry(0.4, 0.3);
-        const panelMaterial = new THREE.MeshPhongMaterial({
-            color: 0x333333,
-            shininess: 70
+        const panelMaterial = new THREE.MeshStandardMaterial({ // Use Standard Material
+            color: 0x222222, // Darker panel
+            metalness: 0.5,
+            roughness: 0.4,
+            side: THREE.DoubleSide // Ensure it's visible
         });
         const panel = new THREE.Mesh(panelGeometry, panelMaterial);
-        panel.position.set(0, 0.4, 0.21);
+        panel.position.set(0, 0.4, 0.21); // Keep position
         this.robot.add(panel);
         
-        // Add indicator lights to panel
-        const lightGeometry = new THREE.CircleGeometry(0.05, 8);
-        const greenLightMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00});
-        const redLightMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-        const blueLightMaterial = new THREE.MeshBasicMaterial({color: 0x0000ff});
+        // Add indicator lights to panel - use emissive materials
+        const lightGeometry = new THREE.CircleGeometry(0.05, 16); // Smoother circles
+        const greenLightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 1 });
+        const redLightMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1 });
+        const blueLightMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, emissive: 0x0000ff, emissiveIntensity: 1 });
         
         const light1 = new THREE.Mesh(lightGeometry, greenLightMaterial);
-        light1.position.set(0.1, 0.45, 0.22);
+        light1.position.set(0.1, 0.45, 0.22); // Slightly forward
         this.robot.add(light1);
         
         const light2 = new THREE.Mesh(lightGeometry, redLightMaterial);
-        light2.position.set(0, 0.45, 0.22);
+        light2.position.set(0, 0.45, 0.22); // Slightly forward
         this.robot.add(light2);
         
         const light3 = new THREE.Mesh(lightGeometry, blueLightMaterial);
-        light3.position.set(-0.1, 0.45, 0.22);
+        light3.position.set(-0.1, 0.45, 0.22); // Slightly forward
         this.robot.add(light3);
         
-        // Create robot arms
+        // Create robot arms - use body material
         const armGeometry = new THREE.BoxGeometry(0.15, 0.6, 0.15);
         
         const leftArm = new THREE.Mesh(armGeometry, this.bodyMaterial);
@@ -245,8 +254,8 @@ export class Player {
         rightArm.position.set(-0.38, 0.3, 0);
         this.robot.add(rightArm);
         
-        // Create robot hands
-        const handGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+        // Create robot hands - use helmet material
+        const handGeometry = new THREE.SphereGeometry(0.12, 16, 16); // Smoother spheres
         
         const leftHand = new THREE.Mesh(handGeometry, this.helmetMaterial);
         leftHand.position.set(0.38, 0, 0);
@@ -256,7 +265,7 @@ export class Player {
         rightHand.position.set(-0.38, 0, 0);
         this.robot.add(rightHand);
         
-        // Create robot legs
+        // Create robot legs - use body material
         const legGeometry = new THREE.BoxGeometry(0.2, 0.6, 0.2);
         
         const leftLeg = new THREE.Mesh(legGeometry, this.bodyMaterial);
@@ -267,7 +276,7 @@ export class Player {
         rightLeg.position.set(-0.2, -0.4, 0);
         this.robot.add(rightLeg);
         
-        // Create robot feet
+        // Create robot feet - use helmet material
         const footGeometry = new THREE.BoxGeometry(0.25, 0.1, 0.35);
         
         const leftFoot = new THREE.Mesh(footGeometry, this.helmetMaterial);
@@ -291,18 +300,23 @@ export class Player {
         
         // Jetpack main body
         const jetpackGeometry = new THREE.BoxGeometry(0.7, 0.6, 0.3);
-        const jetpackMaterial = new THREE.MeshPhongMaterial({
-            color: 0x444444,
-            shininess: 50
+        // Use Standard Material for jetpack
+        const jetpackMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333344, // Dark metallic blue/grey
+            metalness: 0.8,
+            roughness: 0.3,
+            envMapIntensity: 1.0
         });
         const jetpackBody = new THREE.Mesh(jetpackGeometry, jetpackMaterial);
         this.jetpack.add(jetpackBody);
         
         // Jetpack thrusters (main vertical thrusters)
-        const thrusterGeometry = new THREE.CylinderGeometry(0.12, 0.1, 0.4, 8);
-        const thrusterMaterial = new THREE.MeshPhongMaterial({
-            color: 0x666666,
-            shininess: 80
+        const thrusterGeometry = new THREE.CylinderGeometry(0.12, 0.1, 0.4, 16); // Smoother cylinder
+        // Use Standard Material for thrusters
+        const thrusterMaterial = new THREE.MeshStandardMaterial({
+            color: 0x888899, // Lighter metallic blue/grey
+            metalness: 0.9,
+            roughness: 0.2
         });
         
         const leftThruster = new THREE.Mesh(thrusterGeometry, thrusterMaterial);
@@ -338,11 +352,13 @@ export class Player {
         this.jetpackFlame = new THREE.Group();
         
         // Create flame geometry
-        const flameGeometry = new THREE.ConeGeometry(0.1, 0.4, 8);
+        const flameGeometry = new THREE.ConeGeometry(0.1, 0.4, 16); // Smoother cone
+        // Use MeshBasicMaterial for flames as they don't need lighting
         const flameMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff6600,
+            color: 0xffaa00, // Brighter orange base color
             transparent: true,
-            opacity: 0.8
+            opacity: 0.85, // Slightly less transparent
+            blending: THREE.AdditiveBlending // Makes flames brighter when overlapping
         });
         
         // Main vertical flames
@@ -742,16 +758,23 @@ export class Player {
                 }
                 
                 // Dynamic flame color based on intensity
-                const flameColors = [0xff6600, 0xff9900, 0xffcc00];
+                const flameColors = [0xffaa00, 0xffcc66, 0xffff99]; // Brighter, more yellow/white range
                 // More intense flames are more yellow/white
                 const colorIndex = Math.min(2, Math.floor(directionIntensity * 3));
                 
                 // Randomly change colors with flickering effect
-                if (Math.random() > 0.85) {
+                if (Math.random() > 0.8) { // Flicker more often
                     const randomColor = flameColors[colorIndex];
                     if (flame.material) {
                         flame.material.color.setHex(randomColor);
+                        // Add slight opacity variation for flicker
+                        flame.material.opacity = 0.7 + Math.random() * 0.3; 
                     }
+                } else {
+                     if (flame.material) {
+                        // Reset opacity slightly if not flickering color
+                        flame.material.opacity = 0.8 + Math.random() * 0.15;
+                     }
                 }
             });
         }
