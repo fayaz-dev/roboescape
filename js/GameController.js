@@ -1,4 +1,6 @@
 import { Reactions } from './reactions/Reactions.js';
+// Import the EndGameFeedback class from the current directory
+import { EndGameFeedback } from './EndGameFeedback.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
@@ -23,7 +25,19 @@ export class GameController {
         };
         
         // Callback for when the game ends
-        this.onGameOver = onGameOver || function() {};
+        this.onGameOver = onGameOver || function(score, time) {
+            // Use the global handleGameOver function
+            if (window.handleGameOver) {
+                window.handleGameOver(score, time);
+            }
+        };
+        
+        // Initialize end game feedback module
+        this.endGameFeedback = new EndGameFeedback();
+        this.endGameFeedback.setPlayAgainHandler(() => {
+            document.getElementById('home-page').style.display = 'none';
+            this.restart();
+        });
         
         this.setupControls();
 
@@ -191,37 +205,19 @@ export class GameController {
             ctx.fill();
         }
 
-        // Draw game over text with fade-in effect
+        // Update fade-in effect
         this.gameOverEffects.fadeIn = Math.min(1, this.gameOverEffects.fadeIn + 0.02);
-        const fadeAlpha = this.gameOverEffects.fadeIn;
         
-        ctx.save();
-        ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
-        ctx.textAlign = 'center';
-        ctx.font = 'bold 64px Arial';
-        ctx.fillText('OBLITERATED', this.sceneManager.centerX, this.sceneManager.centerY);
-        
-        ctx.font = '32px Arial';
-        ctx.fillText(`Final Score: ${this.score}`, this.sceneManager.centerX, this.sceneManager.centerY + 60);
-        
-        // Format and display time survived
-        const minutes = Math.floor(this.gameTime / 60);
-        const seconds = Math.floor(this.gameTime % 60);
-        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        ctx.fillText(`Time Survived: ${timeString}`, this.sceneManager.centerX, this.sceneManager.centerY + 100);
-        
-        // No longer show the "Press R to restart" instruction since we're using the home page now
-        ctx.restore();
-
+        // Restore context state if shake was applied
         if (this.gameOverEffects.shake > 0) {
-            ctx.restore();
+            ctx.restore(); // This pairs with the ctx.save() inside the shake block
             this.gameOverEffects.shake *= 0.95;
         }
         this.gameOverEffects.redFlash *= 0.95;
         
-        // Once the fade-in and effects are almost complete, trigger the callback to show the home page
+        // Once the fade-in and effects are almost complete, show the end game feedback
         if (this.gameOverEffects.fadeIn >= 0.95 && this.explosionParticles.length === 0) {
-            // Trigger the onGameOver callback with score and time
+            // Only show the feedback once
             if (this.onGameOver && typeof this.onGameOver === 'function') {
                 // Only call once
                 const callback = this.onGameOver;
@@ -229,6 +225,10 @@ export class GameController {
                 
                 // Small delay to allow the final explosion animation to finish
                 setTimeout(() => {
+                    // Show the feedback panel with the player's performance
+                    this.endGameFeedback.showFeedback(this.score, this.gameTime, this.player.dataShards);
+                    
+                    // Call the original callback as well
                     callback(this.score, this.gameTime);
                     
                     // Deactivate gameplay
@@ -272,7 +272,12 @@ export class GameController {
         
         // Set up the callback again
         this.onGameOver = function(score, time) {
-            // Show home page again and update score (this is handled in index.js now)
+            // Handle game over safely
+            if (typeof window.handleGameOver === 'function') {
+                window.handleGameOver(score, time);
+            } else {
+                console.log('Game over with score:', score, 'time:', time);
+            }
         };
     }
     
@@ -515,7 +520,7 @@ export class GameController {
             // Reset onGameOver callback if it was previously nullified
             if (!this.onGameOver) {
                 this.onGameOver = (score, time) => {
-                    // Show home page again and update score
+                    // Show home page again after feedback is displayed
                     document.getElementById('home-page').style.display = 'flex';
                 };
             }

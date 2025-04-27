@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
         homeBackground.resize();
     });
     
+
+    
     // Preload and initialize the game in the background
     initializeGame();
     
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 leaderboardPanel.style.display = 'none';
                 homeSettingsPanel.style.display = 'none';
                 
-                if (gameController.gameOver) {
+                if (gameController && gameController.gameOver) {
                     // If game is over from a previous session, restart it
                     gameController.restart();
                 }
@@ -115,26 +117,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handleGameOver(score, time) {
-        // Show home page again with animation
-        homePage.style.opacity = 0;
-        homePage.style.display = 'block';
-        
-        // Fade in the home page
-        let opacity = 0;
-        const fadeInterval = setInterval(() => {
-            opacity += 0.05;
-            homePage.style.opacity = opacity;
-            
-            if (opacity >= 1) {
-                clearInterval(fadeInterval);
-            }
-        }, 30);
-        
         // Update leaderboard with new score
         updateLeaderboard(score, time);
         
-        // Change start button text to "PLAY AGAIN"
+        // Prepare home page for when the player closes the feedback
+        homePage.style.opacity = '0';
+        
+        // The home page will be shown after the player interacts with the feedback panel
+        // The EndGameFeedback component will handle the "Play Again" action
+        
+        // Change start button text to "PLAY AGAIN" for when the home page is shown
         startButton.textContent = "PLAY AGAIN";
+    }
+    
+    // Make it globally accessible
+    window.handleGameOver = handleGameOver;
+    
+    // Also ensure it's defined early in case it's needed before this point
+    if (typeof window.handleGameOver !== 'function') {
+        window.handleGameOver = handleGameOver;
     }
     
     function updateLeaderboard(score, time) {
