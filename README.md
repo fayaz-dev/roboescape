@@ -13,8 +13,8 @@ An action-packed space adventure game where you control Robonaut, humanity's las
 
 ## Features
 - Interactive home page with animated background
-- In-game settings for customizing your spacecraft
-- Leaderboard to track high scores
+- In-game settings for customizing Robonaut's appearance
+- Leaderboard to track data collection scores
 - Responsive gameplay with smooth animations
 - Challenging physics-based movement
 

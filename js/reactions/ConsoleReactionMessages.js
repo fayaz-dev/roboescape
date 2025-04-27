@@ -48,16 +48,16 @@ export class ConsoleReactionMessages {
                 "Mission continues—Robonaut escapes with critical particle data intact! 🎉"
             ],
             playerDestroyed: [
-                "Rider's been obliterated! End of the journey... 💀",
-                "The cosmos has swallowed Rider—game over. 💀",
-                "Catastrophe strikes; Rider meets a fiery end. 💀",
-                "All systems down, Rider's journey ceases. 💀",
-                "Rider is no more; the void claims another. 💀",
-                "Fate's cruel twist: Rider's downfall is complete. 💀",
-                "A spectacular collapse; Rider's final act. 💀",
-                "Rider's particles scattered across the universe. 💀",
-                "Universe declares game over as Rider vanishes. 💀",
-                "Rider's run ends here—a cosmic farewell. 💀"
+                "Robonaut systems catastrophically compromised. Mission failure... 💀",
+                "The blackhole has consumed Robonaut—Earth's last hope lost. 💀",
+                "Catastrophic systems failure; Robonaut's mission ends prematurely. 💀",
+                "All systems offline, Robonaut's vital mission terminated. 💀",
+                "Robonaut destroyed; humanity loses critical data on the threat. 💀",
+                "Mission critical failure: Robonaut pulled beyond event horizon. 💀",
+                "Final telemetry received from Robonaut before destruction. 💀",
+                "Robonaut's components scattered into the singularity. 💀",
+                "Earth control confirms loss of Robonaut and all collected data. 💀",
+                "Robonaut's mission ends here—humanity must find another way. 💀"
             ],
             gameStart: [
                 "Systems online. Mission commencing... 🚀",
@@ -69,7 +69,7 @@ export class ConsoleReactionMessages {
                 "Thrusters calibrated. The black hole awaits your skill! 🚀",
                 "Pilot interface engaged. Let's dance with gravity! 🚀",
                 "Mission parameters loaded. Collect and survive! 🚀",
-                "Event horizon detected. Watch your distance, captain! 🚀"
+                "Event horizon detected. Watch your distance, Robonaut! 🚀"
             ],
             default: [
                 "Floating aimlessly in the cosmic sea. ⭐",
