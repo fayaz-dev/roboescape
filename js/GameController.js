@@ -226,10 +226,14 @@ export class GameController {
                 // Only call once
                 const callback = this.onGameOver;
                 this.onGameOver = null;
-                callback(this.score, this.gameTime);
                 
-                // Deactivate gameplay
-                this.gameActive = false;
+                // Small delay to allow the final explosion animation to finish
+                setTimeout(() => {
+                    callback(this.score, this.gameTime);
+                    
+                    // Deactivate gameplay
+                    this.gameActive = false;
+                }, 1000);
             }
         }
     }
@@ -263,12 +267,12 @@ export class GameController {
         // Reset blackhole using its dedicated reset method
         this.blackHole.reset();
         
+        // Play intro animation when restarting
+        this.playIntroAnimation();
+        
         // Set up the callback again
         this.onGameOver = function(score, time) {
-            // Show home page again and update score
-            document.getElementById('home-page').style.display = 'flex';
-            
-            // Update leaderboard with new score (this is handled in index.js now)
+            // Show home page again and update score (this is handled in index.js now)
         };
     }
     
@@ -300,14 +304,158 @@ export class GameController {
     
     // New method to actually start the game
     startGame() {
-        this.gameActive = true;
-        this.gameOver = false;
-        this.score = 0;
-        this.gameTime = 0;
-        this.player.reset();
-        this.dataShards.reset();
-        this.blackHole.reset();
-        this.player.dataShards = 1;
+        // Show countdown animation
+        this.showCountdown(() => {
+            this.gameActive = true;
+            this.gameOver = false;
+            this.score = 0;
+            this.gameTime = 0;
+            this.player.reset();
+            this.dataShards.reset();
+            this.blackHole.reset();
+            this.player.dataShards = 1;
+            
+            // Display start message
+            this.reactions.onGameStart();
+        });
+    }
+    
+    showCountdown(callback) {
+        let count = 3;
+        const ctx = this.sceneManager.ctx;
+        const centerX = this.sceneManager.centerX;
+        const centerY = this.sceneManager.centerY;
+        
+        // Create an overlay for the countdown
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.fontSize = '8rem';
+        overlay.style.fontFamily = 'Orbitron, sans-serif';
+        overlay.style.color = '#00ccff';
+        overlay.style.textShadow = '0 0 20px #00ccff, 0 0 40px #0066ff';
+        overlay.style.zIndex = '5';
+        overlay.style.pointerEvents = 'none';
+        document.body.appendChild(overlay);
+        
+        // Function to update countdown
+        const updateCountdown = () => {
+            if (count > 0) {
+                overlay.textContent = count.toString();
+                
+                // Animate the number
+                overlay.style.transform = 'scale(2)';
+                overlay.style.opacity = '0.8';
+                
+                setTimeout(() => {
+                    overlay.style.transition = 'all 0.9s ease-out';
+                    overlay.style.transform = 'scale(0.5)';
+                    overlay.style.opacity = '0';
+                }, 100);
+                
+                count--;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                // Show "GO!" message
+                overlay.textContent = "GO!";
+                overlay.style.transition = 'all 0.5s ease-out';
+                overlay.style.transform = 'scale(2)';
+                overlay.style.opacity = '0.9';
+                
+                setTimeout(() => {
+                    overlay.style.transform = 'scale(0)';
+                    overlay.style.opacity = '0';
+                    
+                    // Remove element after animation
+                    setTimeout(() => {
+                        document.body.removeChild(overlay);
+                    }, 500);
+                    
+                    // Start the game
+                    if (callback) callback();
+                }, 700);
+            }
+        };
+        
+        // Start the countdown
+        updateCountdown();
+    }
+    
+    // Add intro animation when starting the game
+    playIntroAnimation() {
+        // Add a camera zoom effect or player entry animation
+        const canvas = this.sceneManager.canvas;
+        
+        // Make sure canvas is visible and positioned correctly
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '5';
+        
+        // Initial zoom effect
+        canvas.style.transform = 'scale(0.9)';
+        canvas.style.opacity = '0.7';
+        
+        // Create countdown overlay
+        const countdown = document.createElement('div');
+        countdown.style.position = 'absolute';
+        countdown.style.top = '50%';
+        countdown.style.left = '50%';
+        countdown.style.transform = 'translate(-50%, -50%)';
+        countdown.style.fontSize = '100px';
+        countdown.style.fontFamily = 'Orbitron, sans-serif';
+        countdown.style.color = '#00ccff';
+        countdown.style.textShadow = '0 0 20px #00ccff, 0 0 40px #0066ff';
+        countdown.style.zIndex = '15';
+        countdown.style.opacity = '0.9';
+        countdown.style.transition = 'all 0.3s ease-out';
+        countdown.textContent = '3';
+        document.body.appendChild(countdown);
+        
+        // Animate zoom to normal
+        setTimeout(() => {
+            canvas.style.transition = 'all 1s ease-out';
+            canvas.style.transform = 'scale(1)';
+            canvas.style.opacity = '1';
+            
+            // Countdown animation
+            setTimeout(() => {
+                countdown.textContent = '2';
+                countdown.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                setTimeout(() => {
+                    countdown.style.transform = 'translate(-50%, -50%) scale(1)';
+                    setTimeout(() => {
+                        countdown.textContent = '1';
+                        countdown.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                        setTimeout(() => {
+                            countdown.style.transform = 'translate(-50%, -50%) scale(1)';
+                            setTimeout(() => {
+                                countdown.textContent = 'GO!';
+                                countdown.style.color = '#00ff00';
+                                countdown.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                                setTimeout(() => {
+                                    countdown.style.opacity = '0';
+                                    setTimeout(() => {
+                                        document.body.removeChild(countdown);
+                                    }, 500);
+                                    
+                                    // Show a welcome message via the reaction system
+                                    if (this.settings.reactionsEnabled) {
+                                        this.reactions.onGameStart();
+                                    }
+                                }, 800);
+                            }, 1000);
+                        }, 200);
+                    }, 1000);
+                }, 200);
+            }, 500);
+        }, 100);
     }
     
     gameLoop(currentTime) {

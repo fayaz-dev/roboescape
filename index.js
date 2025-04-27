@@ -88,20 +88,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function startGame() {
-        // Hide home page
-        homePage.style.display = 'none';
-        
-        // Hide any open panels
-        leaderboardPanel.style.display = 'none';
-        homeSettingsPanel.style.display = 'none';
-        
-        if (gameController.gameOver) {
-            // If game is over from a previous session, restart it
-            gameController.restart();
-        }
-        
-        // Start the actual gameplay
-        gameController.startGame();
+        // Fade out home page
+        let opacity = 1;
+        const fadeInterval = setInterval(() => {
+            opacity -= 0.05;
+            homePage.style.opacity = opacity;
+            
+            if (opacity <= 0) {
+                clearInterval(fadeInterval);
+                homePage.style.display = 'none';
+                homePage.style.opacity = 1; // Reset opacity for next time
+                
+                // Hide any open panels
+                leaderboardPanel.style.display = 'none';
+                homeSettingsPanel.style.display = 'none';
+                
+                if (gameController.gameOver) {
+                    // If game is over from a previous session, restart it
+                    gameController.restart();
+                }
+                
+                // Start the actual gameplay
+                gameController.startGame();
+            }
+        }, 20);
     }
     
     function handleGameOver(score, time) {

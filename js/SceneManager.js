@@ -2,9 +2,13 @@ import * as THREE from 'three';
 
 export class SceneManager {
     constructor() {
-        this.canvas = document.createElement('canvas');
+        // Use the existing canvas if available, otherwise create one
+        this.canvas = document.getElementById('game-canvas') || document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
-        document.body.appendChild(this.canvas);
+        
+        if (!document.getElementById('game-canvas')) {
+            document.body.appendChild(this.canvas);
+        }
         
         // Set canvas to full window size
         this.canvas.width = window.innerWidth;

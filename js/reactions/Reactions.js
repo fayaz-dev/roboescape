@@ -41,4 +41,9 @@ export class Reactions {
     onPlayerDestroyed() {
         this.processEvent('playerDestroyed');
     }
+    
+    // New method for game start reactions
+    onGameStart() {
+        this.processEvent('gameStart');
+    }
 }

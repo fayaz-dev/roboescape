@@ -1,6 +1,16 @@
 export class ConsoleReactionMessages {
     constructor() {
         this.messages = {
+            gameStart: [
+                "Mission initiated! Collect those particles and escape the void! 🚀",
+                "Systems online! Time to hunt some exotic particles! 🚀",
+                "The black hole awaits... let's show it who's boss! 🚀",
+                "Game on! Let's defy the laws of physics! 🚀",
+                "Mission control: You're cleared for particle harvesting! 🚀",
+                "Engines primed, sensors active - time to ride! 🚀",
+                "The void beckons... let's dance with gravity! 🚀",
+                "Particle hunter ready! Let's set a new record! 🚀"
+            ],
             shardCollected: [
                 "Exotic Particles collected—cash in hand, universe smiling. 🚀",
                 "Another Exotic Particle snagged; cosmic jackpot incoming! 🚀",
@@ -48,6 +58,18 @@ export class ConsoleReactionMessages {
                 "Rider's particles scattered across the universe. 💀",
                 "Universe declares game over as Rider vanishes. 💀",
                 "Rider's run ends here—a cosmic farewell. 💀"
+            ],
+            gameStart: [
+                "Systems online. Mission commencing... 🚀",
+                "Reactor core stable. Let's navigate this void! 🚀",
+                "Artificial Intelligence activated. Time to collect some particles! 🚀",
+                "Black hole proximity detected. Stay alert, pilot! 🚀",
+                "Welcome to the edge of reality. Good luck out there! 🚀",
+                "All systems nominal. Beginning exotic particle collection. 🚀",
+                "Thrusters calibrated. The black hole awaits your skill! 🚀",
+                "Pilot interface engaged. Let's dance with gravity! 🚀",
+                "Mission parameters loaded. Collect and survive! 🚀",
+                "Event horizon detected. Watch your distance, captain! 🚀"
             ],
             default: [
                 "Floating aimlessly in the cosmic sea. ⭐",
