@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import { ExoticParticleBase } from './particles/ExoticParticleBase.js';
-import { NormalExoticParticle } from './particles/NormalExoticParticle.js';
 import { ExoticParticleFactory } from './particles/ExoticParticleFactory.js';
 
 export class ExoticParticles {
@@ -43,6 +41,9 @@ export class ExoticParticles {
             // Apply rotation to shard position
             shard.x += rotationVelocityX * 60 * deltaTime;
             shard.y += rotationVelocityY * 60 * deltaTime;
+            
+            // Update particle's internal state
+            shard.update(deltaTime);
             
             // Draw shard - delegate to the particle's draw method
             shard.draw(ctx);
@@ -102,13 +103,31 @@ export class ExoticParticles {
             Math.abs(y - blackHoleCenterY) < 150
         );
         
-        // Create shard using the factory
-        const shard = this.particleFactory.createParticle('normal', {
+        // Choose particle type based on probability
+        const particleOptions = {
             x: x,
             y: y,
             radius: 8,
             rotation: Math.random() * Math.PI * 2 // Initial rotation angle
-        });
+        };
+        
+        // Random number between 0 and 100 to determine particle type
+        const roll = Math.random() * 100;
+        let particleType;
+        
+        // Distribution: 60% normal, 25% unstable, 10% rare, 5% quantum
+        if (roll < 60) {
+            particleType = 'normal';
+        } else if (roll < 85) {
+            particleType = 'unstable';
+        } else if (roll < 95) {
+            particleType = 'rare';
+        } else {
+            particleType = 'quantum';
+        }
+        
+        // Create shard using the factory
+        const shard = this.particleFactory.createParticle(particleType, particleOptions);
         
         this.shards.push(shard);
     }

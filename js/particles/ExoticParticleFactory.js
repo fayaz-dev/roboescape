@@ -1,4 +1,7 @@
 import { NormalExoticParticle } from './NormalExoticParticle.js';
+import { RareExoticParticle } from './RareExoticParticle.js';
+import { UnstableExoticParticle } from './UnstableExoticParticle.js';
+import { QuantumExoticParticle } from './QuantumExoticParticle.js';
 
 /**
  * Factory for creating different types of exotic particles
@@ -7,10 +10,11 @@ export class ExoticParticleFactory {
     constructor() {
         // Register all available particle types
         this.particleTypes = {
-            'normal': NormalExoticParticle
-            // Additional particle types can be registered here later
-            // 'speed': SpeedExoticParticle,
-            // 'power': PowerExoticParticle,
+            'normal': NormalExoticParticle,
+            'rare': RareExoticParticle,
+            'unstable': UnstableExoticParticle,
+            'quantum': QuantumExoticParticle
+            // Add new particle types here in the future
         };
     }
     
