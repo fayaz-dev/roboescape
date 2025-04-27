@@ -9,7 +9,7 @@ export class Reactions {
         
         // Initialize all reaction types
         this.reactions = {
-            console: ReactionFactory.createReaction('console', player, sceneManager, starfield)
+            screen: ReactionFactory.createReaction('screen', player, sceneManager, starfield)
         };
     }
     

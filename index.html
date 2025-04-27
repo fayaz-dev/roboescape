@@ -312,6 +312,112 @@
             color: #fff;
         }
         
+        /* Screen Reaction Messages */
+        .screen-messages-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            pointer-events: none;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .screen-message {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px #00ccff, 0 0 20px #0066ff;
+            margin: 15px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            position: relative;
+            text-align: center;
+        }
+        
+        .screen-message.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .screen-message.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .message-shardCollected {
+            color: #FF5733;
+            border: 1px solid rgba(255, 87, 51, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: pulse-orange 2s infinite;
+        }
+        
+        .message-playerTrapped {
+            color: #f00;
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: pulse-red 1s infinite;
+        }
+        
+        .message-playerEscaped {
+            color: #28B463;
+            border: 1px solid rgba(40, 180, 99, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: pulse-green 2s infinite;
+        }
+        
+        .message-playerDestroyed {
+            color: #566573;
+            border: 1px solid rgba(86, 101, 115, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+            text-decoration: line-through;
+        }
+        
+        .message-gameStart {
+            color: #3498DB;
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: pulse-blue 3s infinite;
+        }
+        
+        .message-default {
+            color: #ccc;
+            border: 1px solid rgba(204, 204, 204, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        @keyframes pulse-orange {
+            0% { text-shadow: 0 0 5px #FF5733, 0 0 10px #FF5733; }
+            50% { text-shadow: 0 0 15px #FF5733, 0 0 25px #FF5733, 0 0 35px #FF5733; }
+            100% { text-shadow: 0 0 5px #FF5733, 0 0 10px #FF5733; }
+        }
+        
+        @keyframes pulse-red {
+            0% { text-shadow: 0 0 5px #f00, 0 0 10px #f00; }
+            50% { text-shadow: 0 0 15px #f00, 0 0 25px #f00, 0 0 35px #f00; }
+            100% { text-shadow: 0 0 5px #f00, 0 0 10px #f00; }
+        }
+        
+        @keyframes pulse-green {
+            0% { text-shadow: 0 0 5px #28B463, 0 0 10px #28B463; }
+            50% { text-shadow: 0 0 15px #28B463, 0 0 25px #28B463, 0 0 35px #28B463; }
+            100% { text-shadow: 0 0 5px #28B463, 0 0 10px #28B463; }
+        }
+        
+        @keyframes pulse-blue {
+            0% { text-shadow: 0 0 5px #3498DB, 0 0 10px #3498DB; }
+            50% { text-shadow: 0 0 15px #3498DB, 0 0 25px #3498DB, 0 0 35px #3498DB; }
+            100% { text-shadow: 0 0 5px #3498DB, 0 0 10px #3498DB; }
+        }
+        
         .leaderboard-list {
             list-style: none;
             padding: 0;
@@ -453,6 +559,7 @@
 
     <div class="game-container">
         <canvas id="game-canvas"></canvas>
+        <div id="screen-messages-container" class="screen-messages-container"></div>
     </div>
     
     <!-- Leaderboard Panel -->
