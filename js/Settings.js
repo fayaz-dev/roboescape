@@ -8,10 +8,42 @@ export class Settings {
             { name: "Green", bodyColor: 0x2ecc71, helmetColor: 0xa2dfb2 },
             { name: "Yellow", bodyColor: 0xf1c40f, helmetColor: 0xf7dc6f }
         ];
+        
+        // Convert the player colors to CSS hex format for the home page settings
+        this.playerColorsCss = this.playerColors.map(color => ({
+            name: color.name,
+            css: '#' + color.bodyColor.toString(16).padStart(6, '0')
+        }));
+        
         this.selectedColorIndex = 0;
         this.reactionsEnabled = true;
         
+        // Load saved preferences from localStorage if available
+        this.loadSettings();
+        
+        // Create in-game settings UI
         this.createSettingsUI();
+    }
+    
+    loadSettings() {
+        try {
+            const savedSettings = JSON.parse(localStorage.getItem('blackholeSettings'));
+            if (savedSettings) {
+                this.selectedColorIndex = savedSettings.colorIndex || 0;
+                this.reactionsEnabled = savedSettings.reactionsEnabled !== undefined ? 
+                    savedSettings.reactionsEnabled : true;
+            }
+        } catch (e) {
+            console.error("Error loading settings:", e);
+        }
+    }
+    
+    saveSettings() {
+        const settings = {
+            colorIndex: this.selectedColorIndex,
+            reactionsEnabled: this.reactionsEnabled
+        };
+        localStorage.setItem('blackholeSettings', JSON.stringify(settings));
     }
     
     createSettingsUI() {
@@ -112,22 +144,49 @@ export class Settings {
     selectColor(index) {
         if (index >= 0 && index < this.playerColors.length) {
             // Remove selected class from previous selection
-            this.colorButtons[this.selectedColorIndex].classList.remove('selected');
+            if (this.colorButtons && this.colorButtons[this.selectedColorIndex]) {
+                this.colorButtons[this.selectedColorIndex].classList.remove('selected');
+            }
             
             // Update selected color
             this.selectedColorIndex = index;
             
             // Add selected class to new selection
-            this.colorButtons[this.selectedColorIndex].classList.add('selected');
+            if (this.colorButtons && this.colorButtons[this.selectedColorIndex]) {
+                this.colorButtons[this.selectedColorIndex].classList.add('selected');
+            }
             
             // Dispatch custom event for player to update color
             window.dispatchEvent(new CustomEvent('playerColorChange', {
                 detail: this.playerColors[this.selectedColorIndex]
             }));
+            
+            // Save settings to localStorage
+            this.saveSettings();
+        }
+    }
+    
+    updatePlayerColor(cssColor) {
+        // Find the corresponding index from CSS color
+        const index = this.playerColorsCss.findIndex(color => color.css === cssColor);
+        if (index !== -1) {
+            this.selectColor(index);
+        } else {
+            // If color is not in our predefined list, we could add it or ignore
+            console.log("Custom color not in predefined list:", cssColor);
         }
     }
     
     getCurrentPlayerColor() {
         return this.playerColors[this.selectedColorIndex];
+    }
+    
+    getCurrentPlayerColorCss() {
+        return this.playerColorsCss[this.selectedColorIndex].css;
+    }
+    
+    toggleReactions(enabled) {
+        this.reactionsEnabled = enabled;
+        this.saveSettings();
     }
 }

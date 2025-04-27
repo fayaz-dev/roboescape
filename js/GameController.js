@@ -235,11 +235,10 @@ export class GameController {
     }
     
     handleKeydown(e) {
-        if (this.gameOver && e.key === 'r') {
-            this.restart();
-            return;
+        // Only handle gameplay keys if the game is active
+        if (this.gameActive) {
+            this.player.handleKeydown(e);
         }
-        this.player.handleKeydown(e);
     }
     
     handleKeyup(e) {
@@ -364,6 +363,14 @@ export class GameController {
             this.gameOverEffects.redFlash = 1.0;
             // Trigger reaction
             this.reactions.onPlayerDestroyed();
+            
+            // Reset onGameOver callback if it was previously nullified
+            if (!this.onGameOver) {
+                this.onGameOver = (score, time) => {
+                    // Show home page again and update score
+                    document.getElementById('home-page').style.display = 'flex';
+                };
+            }
         }
     }
 }
