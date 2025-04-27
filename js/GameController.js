@@ -1,7 +1,7 @@
 import { Reactions } from './reactions/Reactions.js';
 
 export class GameController {
-    constructor({ sceneManager, player, blackHole, starfield, dataShards, settings }) {
+    constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
         this.sceneManager = sceneManager;
         this.player = player;
         this.blackHole = blackHole;
@@ -10,6 +10,7 @@ export class GameController {
         this.settings = settings;
         this.lastTime = 0;
         this.gameOver = false;
+        this.gameActive = false; // New flag to control game active state
         this.score = 0;
         this.gameTime = 0; // Track game time in seconds
         this.timeDilation = 1.0;
@@ -20,6 +21,9 @@ export class GameController {
             fadeIn: 0,
             redFlash: 0
         };
+        
+        // Callback for when the game ends
+        this.onGameOver = onGameOver || function() {};
         
         this.setupControls();
 
@@ -206,11 +210,7 @@ export class GameController {
         const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         ctx.fillText(`Time Survived: ${timeString}`, this.sceneManager.centerX, this.sceneManager.centerY + 100);
         
-        // Pulsing restart text
-        const pulse = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
-        ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha * pulse})`;
-        ctx.font = '24px Arial';
-        ctx.fillText('Press R to Restart', this.sceneManager.centerX, this.sceneManager.centerY + 160);
+        // No longer show the "Press R to restart" instruction since we're using the home page now
         ctx.restore();
 
         if (this.gameOverEffects.shake > 0) {
@@ -218,6 +218,20 @@ export class GameController {
             this.gameOverEffects.shake *= 0.95;
         }
         this.gameOverEffects.redFlash *= 0.95;
+        
+        // Once the fade-in and effects are almost complete, trigger the callback to show the home page
+        if (this.gameOverEffects.fadeIn >= 0.95 && this.explosionParticles.length === 0) {
+            // Trigger the onGameOver callback with score and time
+            if (this.onGameOver && typeof this.onGameOver === 'function') {
+                // Only call once
+                const callback = this.onGameOver;
+                this.onGameOver = null;
+                callback(this.score, this.gameTime);
+                
+                // Deactivate gameplay
+                this.gameActive = false;
+            }
+        }
     }
     
     handleKeydown(e) {
@@ -234,6 +248,7 @@ export class GameController {
     
     restart() {
         this.gameOver = false;
+        this.gameActive = true;
         this.score = 0;
         this.gameTime = 0; // Reset game time
         this.explosionParticles = [];
@@ -248,6 +263,14 @@ export class GameController {
         
         // Reset blackhole using its dedicated reset method
         this.blackHole.reset();
+        
+        // Set up the callback again
+        this.onGameOver = function(score, time) {
+            // Show home page again and update score
+            document.getElementById('home-page').style.display = 'flex';
+            
+            // Update leaderboard with new score (this is handled in index.js now)
+        };
     }
     
     update(time) {
@@ -268,6 +291,26 @@ export class GameController {
         requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
     }
     
+    // New method to only animate background elements without gameplay
+    animateOnly() {
+        this.lastTime = performance.now();
+        this.gameOver = false;
+        this.gameActive = false; // Game not active yet
+        requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+    }
+    
+    // New method to actually start the game
+    startGame() {
+        this.gameActive = true;
+        this.gameOver = false;
+        this.score = 0;
+        this.gameTime = 0;
+        this.player.reset();
+        this.dataShards.reset();
+        this.blackHole.reset();
+        this.player.dataShards = 1;
+    }
+    
     gameLoop(currentTime) {
         const deltaTime = (currentTime - this.lastTime) / 1000;
         this.lastTime = currentTime;
@@ -275,18 +318,20 @@ export class GameController {
         // Update universe rotation
         this.sceneManager.updateUniverseRotation(deltaTime);
         
-        if (!this.gameOver) {
+        // Clear the canvas
+        this.sceneManager.clear();
+        
+        // Always update starfield and black hole for visual effect
+        this.starfield.update(deltaTime);
+        
+        if (this.gameActive && !this.gameOver) {
+            // Active gameplay
             // Update game time
             this.gameTime += deltaTime;
             
             // Sync blackHole's game time with our game time for difficulty scaling
             this.blackHole.gameTime = this.gameTime;
             
-            // Clear the canvas
-            this.sceneManager.clear();
-            
-            // Update and render
-            this.starfield.update(deltaTime);
             this.blackHole.update(deltaTime, this.player); // Pass player to blackHole
             // Pass the blackHole to the player update method
             this.player.update(deltaTime, this.blackHole);
@@ -297,11 +342,13 @@ export class GameController {
             
             // Draw score
             this.drawScore();
-        } else {
-            this.sceneManager.clear();
-            this.starfield.update(deltaTime);
+        } else if (this.gameOver) {
+            // Game over state
             this.blackHole.update(deltaTime, null); // No player when game over
             this.drawGameOver();
+        } else {
+            // Background animation only (before game starts)
+            this.blackHole.update(deltaTime, null);
         }
         
         // Continue the game loop
