@@ -655,19 +655,25 @@ export class Player {
             );
         }
         
-        // Only apply universe rotation if the robot is affected AND moving
+        // Only apply universe rotation if the robot is affected AND has significant velocity
         // This prevents the robot from spinning when stationary
-        if (this.affectedByRotation && velocityMagnitude > 10) {
+        if (this.affectedByRotation && velocityMagnitude > 20) { // Increased threshold
             // Create a quaternion for the universe rotation
             const universeRotationQuat = new THREE.Quaternion();
             universeRotationQuat.setFromAxisAngle(
                 new THREE.Vector3(0, 1, 0), // Rotate around Y axis
-                this.sceneManager.universeRotationAngle
+                this.sceneManager.universeRotationAngle * 0.5 // Reduced effect
             );
             
             // Apply universe rotation to the robot's current orientation
             // This preserves any orientation from movement while adding universe spin
             this.robot.quaternion.premultiply(universeRotationQuat);
+        } else if (velocityMagnitude < 5) {
+            // When nearly stationary, actively stabilize the robot
+            // Reset any residual universe rotation effects
+            const stabilizationQuaternion = new THREE.Quaternion();
+            stabilizationQuaternion.setFromEuler(new THREE.Euler(0, 0, 0));
+            this.robot.quaternion.slerp(stabilizationQuaternion, 0.1);
         }
         
         // Enhance jetpack flames based on movement speed and direction
@@ -926,6 +932,9 @@ export class Player {
         this.lastShardLossTime = 0;
         // Reset the drag to default value
         this.drag = this.defaultDrag;
+        // Reset escape boost flags
+        this.escapeBoostActive = false;
+        this.escapeBoostDuration = 0;
         
         // Update robot size in case window size changed
         this.updateRobotSize();
@@ -938,6 +947,22 @@ export class Player {
             this.robot.rotation.set(0, 0, 0);
             // Reset quaternion to identity (no rotation)
             this.robot.quaternion.set(0, 0, 0, 1);
+            // Reset scale to prevent any lingering distortion effects
+            this.robot.scale.set(1, 1, 1);
+        }
+        
+        // Reset jetpack flames
+        if (this.jetpackFlame) {
+            this.jetpackFlame.visible = false;
+            this.jetpackFlame.scale.set(1, 1, 1);
+            
+            // Reset individual flames
+            this.jetpackFlame.children.forEach(flame => {
+                flame.scale.set(1, 1, 1);
+                if (flame.material) {
+                    flame.material.color.setHex(0xff6600); // Reset to default flame color
+                }
+            });
         }
     }
 }
