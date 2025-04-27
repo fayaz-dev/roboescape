@@ -1,6 +1,7 @@
 import { Reactions } from './reactions/Reactions.js';
 // Import the EndGameFeedback class from the current directory
 import { EndGameFeedback } from './EndGameFeedback.js';
+import uiManager from './UIManager.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
@@ -39,17 +40,13 @@ export class GameController {
             this.restart();
         });
         
-        // Add handlers for settings and leaderboard buttons
+        // Add handlers for settings and leaderboard buttons using UIManager
         this.endGameFeedback.setSettingsHandler(() => {
-            // Show settings panel
-            const settingsPanel = document.getElementById('home-settings-panel');
-            settingsPanel.style.display = 'block';
+            // No additional handler needed as UIManager handles everything
         });
         
         this.endGameFeedback.setLeaderboardHandler(() => {
-            // Show leaderboard panel
-            const leaderboardPanel = document.getElementById('leaderboard-panel');
-            leaderboardPanel.style.display = 'block';
+            // No additional handler needed as UIManager handles everything
         });
         
         this.setupControls();

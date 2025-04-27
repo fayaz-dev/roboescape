@@ -6,6 +6,7 @@ import { Starfield } from './js/Starfield.js';
 import { ExoticParticles } from './js/ExoticParticles.js';
 import { Settings } from './js/Settings.js';
 import { HomeBackground } from './js/HomeBackground.js';
+import uiManager from './js/UIManager.js';
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
@@ -36,10 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up event listeners for the home page
     startButton.addEventListener('click', startGame);
-    settingsButton.addEventListener('click', toggleSettings);
-    leaderboardButton.addEventListener('click', toggleLeaderboard);
-    leaderboardClose.addEventListener('click', toggleLeaderboard);
-    settingsClose.addEventListener('click', toggleSettings);
+    settingsButton.addEventListener('click', () => uiManager.toggleSettings());
+    leaderboardButton.addEventListener('click', () => uiManager.toggleLeaderboard());
+    leaderboardClose.addEventListener('click', () => uiManager.toggleLeaderboard());
+    settingsClose.addEventListener('click', () => uiManager.toggleSettings());
     
     // Initialize home background animation
     homeBackground.init();
@@ -82,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Setup the game
         gameController.setup();
+        
+        // Set the game controller reference in the UI manager
+        uiManager.setGameController(gameController);
         
         // Start animations but don't start actual gameplay yet
         gameController.animateOnly();
@@ -204,142 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
     
+    // The toggleLeaderboard and toggleSettings functions are now handled by UIManager
+    // These are kept for backward compatibility but redirect to the UIManager
     function toggleLeaderboard() {
-        if (leaderboardPanel.style.display === 'block') {
-            leaderboardPanel.style.display = 'none';
-        } else {
-            leaderboardPanel.style.display = 'block';
-            homeSettingsPanel.style.display = 'none';
-        }
+        uiManager.toggleLeaderboard();
     }
     
     function toggleSettings() {
-        if (homeSettingsPanel.style.display === 'block') {
-            homeSettingsPanel.style.display = 'none';
-        } else {
-            homeSettingsPanel.style.display = 'block';
-            leaderboardPanel.style.display = 'none';                // Load settings from the existing Settings module
-                if (gameController && gameController.settings) {
-                    // Clone settings panel content from the in-game settings
-                    const settingsContent = document.querySelector('.home-settings-panel .settings-content');
-                    
-                    // Clear previous content
-                    settingsContent.innerHTML = '';
-                    
-                    // Create player color settings
-                    const colorSection = document.createElement('div');
-                    colorSection.className = 'settings-section';
-                    
-                    const colorTitle = document.createElement('h3');
-                    colorTitle.textContent = 'Robot Color';
-                    colorSection.appendChild(colorTitle);
-                    
-                    const colorGrid = document.createElement('div');
-                    colorGrid.className = 'color-grid';
-                    
-                    // Get color options from settings
-                    const colors = gameController.settings.playerColorsCss.map(c => c.css);
-                    const currentColor = gameController.settings.getCurrentPlayerColorCss();
-                    
-                    colors.forEach(color => {
-                        const colorOption = document.createElement('div');
-                        colorOption.className = 'color-option';
-                        colorOption.style.backgroundColor = color;
-                        
-                        // Mark as selected if it matches current player color
-                        if (currentColor === color) {
-                            colorOption.classList.add('selected');
-                        }
-                        
-                        colorOption.addEventListener('click', () => {
-                            // Remove selection from all options
-                            document.querySelectorAll('.color-option').forEach(opt => {
-                                opt.classList.remove('selected');
-                            });
-                            
-                            // Add selection to clicked option
-                            colorOption.classList.add('selected');
-                            
-                            // Update player color
-                            gameController.settings.updatePlayerColor(color);
-                        });
-                        
-                        colorGrid.appendChild(colorOption);
-                    });
-                    
-                    colorSection.appendChild(colorGrid);
-                    settingsContent.appendChild(colorSection);
-                    
-                    // Create reaction toggle
-                    const reactionSection = document.createElement('div');
-                    reactionSection.className = 'settings-section';
-                    
-                    const reactionTitle = document.createElement('h3');
-                    reactionTitle.textContent = 'Game Reactions';
-                    reactionSection.appendChild(reactionTitle);
-                    
-                    // Create toggle switch
-                    const toggleContainer = document.createElement('div');
-                    toggleContainer.style.display = 'flex';
-                    toggleContainer.style.alignItems = 'center';
-                    toggleContainer.style.marginTop = '10px';
-                    
-                    const toggle = document.createElement('label');
-                    toggle.className = 'toggle-switch';
-                    toggle.style.position = 'relative';
-                    toggle.style.display = 'inline-block';
-                    toggle.style.width = '60px';
-                    toggle.style.height = '30px';
-                    toggle.style.marginRight = '10px';
-                    
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.style.opacity = '0';
-                    checkbox.style.width = '0';
-                    checkbox.style.height = '0';
-                    checkbox.checked = gameController.settings.reactionsEnabled;
-                    
-                    const slider = document.createElement('span');
-                    slider.style.position = 'absolute';
-                    slider.style.cursor = 'pointer';
-                    slider.style.top = '0';
-                    slider.style.left = '0';
-                    slider.style.right = '0';
-                    slider.style.bottom = '0';
-                    slider.style.backgroundColor = checkbox.checked ? '#00ccff' : '#333';
-                    slider.style.borderRadius = '30px';
-                    slider.style.transition = '.4s';
-                    
-                    const sliderBefore = document.createElement('span');
-                    sliderBefore.style.position = 'absolute';
-                    sliderBefore.style.content = '""';
-                    sliderBefore.style.height = '22px';
-                    sliderBefore.style.width = '22px';
-                    sliderBefore.style.left = checkbox.checked ? '34px' : '4px';
-                    sliderBefore.style.bottom = '4px';
-                    sliderBefore.style.backgroundColor = 'white';
-                    sliderBefore.style.borderRadius = '50%';
-                    sliderBefore.style.transition = '.4s';
-                    
-                    const label = document.createElement('span');
-                    label.textContent = 'Enable gameplay reactions';
-                    
-                    // Add event listener
-                    checkbox.addEventListener('change', function() {
-                        sliderBefore.style.left = this.checked ? '34px' : '4px';
-                        slider.style.backgroundColor = this.checked ? '#00ccff' : '#333';
-                        gameController.settings.toggleReactions(this.checked);
-                    });
-                    
-                    slider.appendChild(sliderBefore);
-                    toggle.appendChild(checkbox);
-                    toggle.appendChild(slider);
-                    toggleContainer.appendChild(toggle);
-                    toggleContainer.appendChild(label);
-                    reactionSection.appendChild(toggleContainer);
-                    
-                    settingsContent.appendChild(reactionSection);
-                }
-        }
+        // Just use UIManager's toggle function which now handles all of this
+        uiManager.toggleSettings();
     }
 });

@@ -1,4 +1,6 @@
 // End Game Feedback module to handle player performance feedback
+import uiManager from './UIManager.js';
+
 export class EndGameFeedback {
     constructor() {
         // Create the DOM elements
@@ -6,6 +8,9 @@ export class EndGameFeedback {
         
         // Initially hide the feedback panel
         this.hidePanel();
+        
+        // Store UIManager for handling common UI elements
+        this.uiManager = uiManager;
     }
     
     createElements() {
@@ -159,40 +164,24 @@ export class EndGameFeedback {
     
     setSettingsHandler(handler) {
         this.settingsButton.addEventListener('click', () => {
-            // Semi-hide this panel to show settings
-            this.panel.style.opacity = '0.3';
-            handler();
+            // Use the shared UIManager to handle settings panel
+            this.uiManager.toggleSettings(this.panel);
             
-            // Find settings panel close button and add a listener to restore this panel
-            const settingsCloseButton = document.getElementById('settings-close');
-            if (settingsCloseButton) {
-                const originalOnclick = settingsCloseButton.onclick;
-                settingsCloseButton.onclick = (e) => {
-                    // Run original close handler if it exists
-                    if (originalOnclick) originalOnclick.call(settingsCloseButton, e);
-                    // Restore this panel
-                    this.panel.style.opacity = '1';
-                };
+            // Call the original handler if provided
+            if (handler && typeof handler === 'function') {
+                handler();
             }
         });
     }
     
     setLeaderboardHandler(handler) {
         this.leaderboardButton.addEventListener('click', () => {
-            // Semi-hide this panel to show leaderboard
-            this.panel.style.opacity = '0.3';
-            handler();
+            // Use the shared UIManager to handle leaderboard panel
+            this.uiManager.toggleLeaderboard(this.panel);
             
-            // Find leaderboard panel close button and add a listener to restore this panel
-            const leaderboardCloseButton = document.getElementById('leaderboard-close');
-            if (leaderboardCloseButton) {
-                const originalOnclick = leaderboardCloseButton.onclick;
-                leaderboardCloseButton.onclick = (e) => {
-                    // Run original close handler if it exists
-                    if (originalOnclick) originalOnclick.call(leaderboardCloseButton, e);
-                    // Restore this panel
-                    this.panel.style.opacity = '1';
-                };
+            // Call the original handler if provided
+            if (handler && typeof handler === 'function') {
+                handler();
             }
         });
     }
