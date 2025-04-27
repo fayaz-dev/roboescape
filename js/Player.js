@@ -637,11 +637,15 @@ export class Player {
             );
         } else {
             // If not moving much, gradually return to default orientation
-            this.robot.quaternion.slerp(
-                new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0)), 
-                0.05
-            );
+            // Default orientation: head upright facing forward (toward screen)
+            const defaultQuaternion = new THREE.Quaternion();
+            // Use a rotation that puts the robot facing forward (toward the screen/camera)
+            defaultQuaternion.setFromEuler(new THREE.Euler(0, 0, 0));
             
+            // Smoothly interpolate to the default orientation
+            this.robot.quaternion.slerp(defaultQuaternion, 0.05);
+            
+            // Reset any tilt
             this.robot.rotation.x = THREE.MathUtils.lerp(
                 this.robot.rotation.x, 
                 0, 
@@ -649,8 +653,9 @@ export class Player {
             );
         }
         
-        // Add universe rotation to the robot model if affected by rotation
-        if (this.affectedByRotation) {
+        // Only apply universe rotation if the robot is affected AND moving
+        // This prevents the robot from spinning when stationary
+        if (this.affectedByRotation && velocityMagnitude > 10) {
             // Create a quaternion for the universe rotation
             const universeRotationQuat = new THREE.Quaternion();
             universeRotationQuat.setFromAxisAngle(
