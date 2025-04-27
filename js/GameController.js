@@ -277,6 +277,11 @@ export class GameController {
         // Reset blackhole using its dedicated reset method
         this.blackHole.reset();
         
+        // Clear any existing screen messages
+        if (this.reactions && this.reactions.reactions.screen) {
+            this.reactions.reactions.screen.clearAllMessages();
+        }
+        
         // Hide any open panels that might be visible
         const leaderboardPanel = document.getElementById('leaderboard-panel');
         const settingsPanel = document.getElementById('home-settings-panel');
@@ -285,6 +290,13 @@ export class GameController {
         
         // Play intro animation when restarting
         this.playIntroAnimation();
+        
+        // Make sure game start message appears when restarting
+        if (this.settings.reactionsEnabled) {
+            setTimeout(() => {
+                this.reactions.onGameStart();
+            }, 100);
+        }
         
         // Set up the callback again
         this.onGameOver = function(score, time) {

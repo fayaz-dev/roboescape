@@ -5,22 +5,7 @@ export class ScreenReaction extends ReactionBase {
     constructor(player, sceneManager, starfield) {
         super(player, sceneManager, starfield);
         this.messages = new ConsoleReactionMessages();
-        this.messagesContainer = document.getElementById('screen-messages-container');
-        
-        // Create the container if it doesn't exist
-        if (!this.messagesContainer) {
-            this.messagesContainer = document.createElement('div');
-            this.messagesContainer.id = 'screen-messages-container';
-            this.messagesContainer.className = 'screen-messages-container';
-            
-            // Get the game container and append the messages container
-            const gameContainer = document.querySelector('.game-container');
-            if (gameContainer) {
-                gameContainer.appendChild(this.messagesContainer);
-            } else {
-                document.body.appendChild(this.messagesContainer);
-            }
-        }
+        this.ensureMessagesContainer();
         
         // Make container cover the entire game area for message positioning
         this.messagesContainer.style.top = '0';
@@ -76,6 +61,9 @@ export class ScreenReaction extends ReactionBase {
     }
 
     react(eventType, data) {
+        // Ensure the messages container exists and is in the DOM
+        this.ensureMessagesContainer();
+        
         // Get a random message for this event type
         const message = this.messages.getRandomMessage(eventType);
         
@@ -161,8 +149,37 @@ export class ScreenReaction extends ReactionBase {
         }
     }
     
+    // Method to ensure the messages container exists and is properly connected to DOM
+    ensureMessagesContainer() {
+        this.messagesContainer = document.getElementById('screen-messages-container');
+        
+        // Create the container if it doesn't exist or isn't connected to the DOM
+        if (!this.messagesContainer || !document.body.contains(this.messagesContainer)) {
+            // If there's an old disconnected element with this ID, remove it
+            if (this.messagesContainer) {
+                if (this.messagesContainer.parentNode) {
+                    this.messagesContainer.parentNode.removeChild(this.messagesContainer);
+                }
+            }
+            
+            // Create a new container
+            this.messagesContainer = document.createElement('div');
+            this.messagesContainer.id = 'screen-messages-container';
+            this.messagesContainer.className = 'screen-messages-container';
+            
+            // Get the game container and append the messages container
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer) {
+                gameContainer.appendChild(this.messagesContainer);
+            } else {
+                document.body.appendChild(this.messagesContainer);
+            }
+        }
+    }
+    
     // Method to clear all messages (e.g., when game ends or restarts)
     clearAllMessages() {
+        this.ensureMessagesContainer();
         while (this.messagesContainer.firstChild) {
             this.messagesContainer.removeChild(this.messagesContainer.firstChild);
         }
