@@ -1,7 +1,7 @@
 {
-  "name": "Robonaut's Mission to Blackhole",
+  "name": "robonaut.quest",
   "version": "1.0.0",
-  "description": "",
+  "description": "Robonaut's Quest to Blackhole",
   "main": "index.js",
   "scripts": {
     "dev": "vite --host",
