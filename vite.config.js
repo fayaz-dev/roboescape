@@ -12,7 +12,7 @@ export default defineConfig({
     }
   },
   server: {
-    open: true
+    open: 'index.htm'
   },
   // Specify the custom entry point
   appType: 'spa'
