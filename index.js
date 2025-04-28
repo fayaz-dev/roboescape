@@ -7,6 +7,7 @@ import { ExoticParticles } from './js/ExoticParticles.js';
 import { Settings } from './js/Settings.js';
 import { HomeBackground } from './js/HomeBackground.js';
 import uiManager from './js/UIManager.js';
+import soundManager from './js/SoundManager.js';
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {

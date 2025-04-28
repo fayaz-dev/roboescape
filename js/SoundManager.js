@@ -1,0 +1,494 @@
+/**
+ * SoundManager - Handles all game audio using Web Audio API
+ * Provides methods to play different sound effects and control global sound settings
+ */
+export class SoundManager {
+    constructor() {
+        // Create audio context
+        this.audioContext = null;
+        
+        // Initialize audio enabled state (default: enabled)
+        this.soundEnabled = true;
+        
+        // Try to get saved sound preference
+        const savedSoundPreference = localStorage.getItem('soundEnabled');
+        if (savedSoundPreference !== null) {
+            this.soundEnabled = savedSoundPreference === 'true';
+        }
+        
+        // Sound banks for different effects
+        this.sounds = {
+            gameStart: null,
+            blackHoleCollision: null,
+            gameOver: null,
+            particles: {
+                normal: null,
+                rare: null,
+                quantum: null,
+                unstable: null
+            }
+        };
+        
+        // Initialize but don't create context until user interaction
+        this.initialize();
+    }
+    
+    /**
+     * Initialize audio context and load sound effects
+     */
+    initialize() {
+        // Add sound toggle button to the UI
+        this.createSoundToggle();
+        
+        // We defer creating the audio context until first user interaction
+        // This is because browsers require user interaction before creating AudioContext
+        document.addEventListener('click', () => {
+            this.initAudioContext();
+        }, { once: true });
+        
+        // Listen for particle collection events
+        window.addEventListener('particleCollected', (event) => {
+            const { type, value } = event.detail;
+            this.playParticleCollected(type);
+        });
+    }
+    
+    /**
+     * Initialize the Web Audio API context
+     */
+    initAudioContext() {
+        if (this.audioContext) return; // Already initialized
+        
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+            
+            // Create and cache all sounds
+            this.createSounds();
+            
+            // Log success
+            console.log('Audio context initialized successfully');
+            
+            // Resume audio context if it's suspended and sound is enabled
+            if (this.audioContext.state === 'suspended' && this.soundEnabled) {
+                this.audioContext.resume().then(() => {
+                    console.log('Audio context resumed successfully');
+                }).catch(err => {
+                    console.warn('Failed to resume audio context', err);
+                });
+            }
+        } catch (error) {
+            console.error('Web Audio API is not supported in this browser', error);
+        }
+    }
+    
+    /**
+     * Create sound toggle button in the top-right corner
+     */
+    createSoundToggle() {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'sound-toggle';
+        toggleBtn.innerHTML = this.soundEnabled ? '🔊' : '🔇';
+        toggleBtn.title = this.soundEnabled ? 'Sound On' : 'Sound Off';
+        
+        // Toggle functionality
+        toggleBtn.addEventListener('click', () => {
+            this.toggleSound();
+            toggleBtn.innerHTML = this.soundEnabled ? '🔊' : '🔇';
+            toggleBtn.title = this.soundEnabled ? 'Sound On' : 'Sound Off';
+        });
+        
+        // Add to DOM
+        document.body.appendChild(toggleBtn);
+    }
+    
+    /**
+     * Toggle sound on/off
+     */
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        
+        // Save preference to localStorage
+        localStorage.setItem('soundEnabled', this.soundEnabled.toString());
+        
+        // Make sure audio context is running if sound is enabled
+        if (this.soundEnabled && this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        
+        // Dispatch event so other components can respond to sound toggle
+        window.dispatchEvent(new CustomEvent('soundToggled', { detail: { enabled: this.soundEnabled } }));
+    }
+    
+    /**
+     * Create all sound effects
+     */
+    createSounds() {
+        if (!this.audioContext) return;
+        
+        // Game start/restart sound
+        this.sounds.gameStart = this.createGameStartSound();
+        
+        // Black hole collision sound
+        this.sounds.blackHoleCollision = this.createBlackHoleCollisionSound();
+        
+        // Game over sound
+        this.sounds.gameOver = this.createGameOverSound();
+        
+        // Particle collection sounds
+        this.sounds.particles.normal = this.createNormalParticleSound();
+        this.sounds.particles.rare = this.createRareParticleSound();
+        this.sounds.particles.quantum = this.createQuantumParticleSound();
+        this.sounds.particles.unstable = this.createUnstableParticleSound();
+    }
+    
+    /**
+     * Create a sound for game start/restart
+     * @returns {Function} Function that plays the sound when called
+     */
+    createGameStartSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create oscillators for a spacey startup sound
+            const osc1 = this.audioContext.createOscillator();
+            const osc2 = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Connect nodes
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Set up oscillator properties
+            osc1.type = 'sine';
+            osc2.type = 'triangle';
+            
+            // Start at low volume
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            // Fade in
+            gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.1);
+            // Fade out
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.5);
+            
+            // Frequency sweep
+            osc1.frequency.setValueAtTime(220, this.audioContext.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(880, this.audioContext.currentTime + 0.7);
+            
+            osc2.frequency.setValueAtTime(440, this.audioContext.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(1760, this.audioContext.currentTime + 0.7);
+            
+            // Start and stop oscillators
+            osc1.start();
+            osc2.start();
+            osc1.stop(this.audioContext.currentTime + 1.5);
+            osc2.stop(this.audioContext.currentTime + 1.5);
+        };
+    }
+    
+    /**
+     * Create a sound for black hole collision
+     * @returns {Function} Function that plays the sound when called
+     */
+    createBlackHoleCollisionSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a low rumbling sound with noise
+            const bufferSize = 4096;
+            const noiseNode = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+            const gainNode = this.audioContext.createGain();
+            const filter = this.audioContext.createBiquadFilter();
+            
+            // Connect nodes
+            noiseNode.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Configure filter
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
+            filter.Q.setValueAtTime(10, this.audioContext.currentTime);
+            
+            // White noise generator
+            noiseNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+            };
+            
+            // Volume envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.5, this.audioContext.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 2);
+            
+            // Frequency sweep
+            filter.frequency.linearRampToValueAtTime(100, this.audioContext.currentTime + 2);
+            
+            // Clean up
+            setTimeout(() => {
+                noiseNode.disconnect();
+                gainNode.disconnect();
+                filter.disconnect();
+            }, 2000);
+        };
+    }
+    
+    /**
+     * Create a game over sound
+     * @returns {Function} Function that plays the sound when called
+     */
+    createGameOverSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a dramatic game over sound
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Connect nodes
+            osc.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Configure oscillator
+            osc.type = 'sawtooth';
+            
+            // Create a downward sweep
+            osc.frequency.setValueAtTime(880, this.audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(55, this.audioContext.currentTime + 1.5);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.3, this.audioContext.currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 2);
+            
+            // Start and stop
+            osc.start();
+            osc.stop(this.audioContext.currentTime + 2);
+        };
+    }
+    
+    /**
+     * Create a sound for normal particle collection
+     * @returns {Function} Function that plays the sound when called
+     */
+    createNormalParticleSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a simple collection sound
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Connect nodes
+            osc.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Configure oscillator
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, this.audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1320, this.audioContext.currentTime + 0.1);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+            
+            // Start and stop
+            osc.start();
+            osc.stop(this.audioContext.currentTime + 0.3);
+        };
+    }
+    
+    /**
+     * Create a sound for rare particle collection
+     * @returns {Function} Function that plays the sound when called
+     */
+    createRareParticleSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a sound for rare particles
+            const osc1 = this.audioContext.createOscillator();
+            const osc2 = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Connect nodes
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Configure oscillators
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(1320, this.audioContext.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(1760, this.audioContext.currentTime + 0.15);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1320 * 1.5, this.audioContext.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(1760 * 1.5, this.audioContext.currentTime + 0.15);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+            
+            // Start and stop
+            osc1.start();
+            osc2.start();
+            osc1.stop(this.audioContext.currentTime + 0.4);
+            osc2.stop(this.audioContext.currentTime + 0.4);
+        };
+    }
+    
+    /**
+     * Create a sound for quantum particle collection
+     * @returns {Function} Function that plays the sound when called
+     */
+    createQuantumParticleSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a more complex sound for quantum particles
+            const osc1 = this.audioContext.createOscillator();
+            const osc2 = this.audioContext.createOscillator();
+            const osc3 = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Connect nodes
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            osc3.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Configure oscillators
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(1760, this.audioContext.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(2093, this.audioContext.currentTime + 0.2);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1760 * 1.5, this.audioContext.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(2093 * 1.5, this.audioContext.currentTime + 0.2);
+            
+            osc3.type = 'square';
+            osc3.frequency.setValueAtTime(1760 * 0.5, this.audioContext.currentTime);
+            osc3.frequency.exponentialRampToValueAtTime(2093 * 0.5, this.audioContext.currentTime + 0.2);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.2);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+            
+            // Start and stop
+            osc1.start();
+            osc2.start();
+            osc3.start();
+            osc1.stop(this.audioContext.currentTime + 0.5);
+            osc2.stop(this.audioContext.currentTime + 0.5);
+            osc3.stop(this.audioContext.currentTime + 0.5);
+        };
+    }
+    
+    /**
+     * Create a sound for unstable particle collection
+     * @returns {Function} Function that plays the sound when called
+     */
+    createUnstableParticleSound() {
+        return () => {
+            if (!this.soundEnabled || !this.audioContext) return;
+            
+            // Create a distorted sound for unstable particles
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            const distortion = this.audioContext.createWaveShaper();
+            
+            // Connect nodes
+            osc.connect(distortion);
+            distortion.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Create distortion curve
+            function makeDistortionCurve(amount) {
+                const k = typeof amount === 'number' ? amount : 50;
+                const n_samples = 44100;
+                const curve = new Float32Array(n_samples);
+                for (let i = 0; i < n_samples; ++i) {
+                    const x = (i * 2) / n_samples - 1;
+                    curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            }
+            
+            distortion.curve = makeDistortionCurve(100);
+            distortion.oversample = '4x';
+            
+            // Configure oscillator
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(440, this.audioContext.currentTime);
+            osc.frequency.linearRampToValueAtTime(880, this.audioContext.currentTime + 0.1);
+            osc.frequency.linearRampToValueAtTime(220, this.audioContext.currentTime + 0.2);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, this.audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+            
+            // Start and stop
+            osc.start();
+            osc.stop(this.audioContext.currentTime + 0.5);
+        };
+    }
+    
+    /**
+     * Play game start/restart sound
+     */
+    playGameStart() {
+        if (this.sounds.gameStart) {
+            this.sounds.gameStart();
+        } else {
+            this.initAudioContext();
+            this.createSounds();
+            if (this.sounds.gameStart) {
+                this.sounds.gameStart();
+            }
+        }
+    }
+    
+    /**
+     * Play black hole collision sound
+     */
+    playBlackHoleCollision() {
+        if (this.sounds.blackHoleCollision) {
+            this.sounds.blackHoleCollision();
+        }
+    }
+    
+    /**
+     * Play game over sound
+     */
+    playGameOver() {
+        if (this.sounds.gameOver) {
+            this.sounds.gameOver();
+        }
+    }
+    
+    /**
+     * Play particle collection sound based on particle type
+     * @param {string} type - Particle type ('normal', 'rare', 'quantum', 'unstable')
+     */
+    playParticleCollected(type = 'normal') {
+        if (this.sounds.particles[type]) {
+            this.sounds.particles[type]();
+        } else {
+            // Fallback to normal particle sound
+            if (this.sounds.particles.normal) {
+                this.sounds.particles.normal();
+            }
+        }
+    }
+}
+
+// Create and export singleton instance
+const soundManager = new SoundManager();
+export default soundManager;

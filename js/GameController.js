@@ -109,7 +109,7 @@ export class GameController {
                 this.gameOverEffects.redFlash = 1.0;
                 // Set game over immediately on direct collision
                 this.gameOver = true;
-                // Trigger reaction
+                // Trigger reaction (this will also play collision sound)
                 this.reactions.onPlayerDestroyed();
                 return; // Stop further checks after game over
             }
@@ -132,7 +132,7 @@ export class GameController {
                 this.gameOverEffects.fadeIn = 0;
                 this.gameOverEffects.redFlash = 1.0;
                 this.gameOver = true;
-                // Trigger reaction
+                // Trigger reaction (which will also play sounds)
                 this.reactions.onPlayerDestroyed();
             }
         }
@@ -288,6 +288,9 @@ export class GameController {
         if (leaderboardPanel) leaderboardPanel.style.display = 'none';
         if (settingsPanel) settingsPanel.style.display = 'none';
         
+        // Trigger the game start reaction (which will play sound too)
+        this.reactions.onGameStart();
+        
         // Play intro animation when restarting
         this.playIntroAnimation();
         
@@ -348,7 +351,7 @@ export class GameController {
             this.blackHole.reset();
             this.player.dataShards = 1;
             
-            // Display start message
+            // Display start message and play start sound
             this.reactions.onGameStart();
         });
     }

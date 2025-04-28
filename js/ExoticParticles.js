@@ -134,6 +134,7 @@ export class ExoticParticles {
     
     checkCollection(player) {
         let collectedPoints = 0;
+        let collectedType = null;
         
         this.shards = this.shards.filter(shard => {
             const dx = player.x - shard.x;
@@ -145,6 +146,26 @@ export class ExoticParticles {
                 collectedPoints += shard.value;
                 // Create collection effect
                 this.createCollectionEffect(shard.x, shard.y, shard.value);
+                
+                // Determine particle type based on constructor name or value
+                if (shard instanceof this.particleFactory.particleTypes.quantum) {
+                    collectedType = 'quantum';
+                } else if (shard instanceof this.particleFactory.particleTypes.rare) {
+                    collectedType = 'rare';
+                } else if (shard instanceof this.particleFactory.particleTypes.unstable) {
+                    collectedType = 'unstable';
+                } else {
+                    collectedType = 'normal';
+                }
+                
+                // Dispatch an event for the collected particle
+                window.dispatchEvent(new CustomEvent('particleCollected', { 
+                    detail: { 
+                        type: collectedType, 
+                        value: shard.value 
+                    } 
+                }));
+                
                 return false;
             }
             return true;

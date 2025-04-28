@@ -1,4 +1,6 @@
 // filepath: /home/fayaz/lab/roboescape/js/UIManager.js
+import soundManager from './SoundManager.js';
+
 /**
  * UIManager - Utility class for managing common UI functionality across screens
  */
@@ -16,6 +18,9 @@ export class UIManager {
         
         // Game controller reference for settings access
         this.gameController = null;
+        
+        // Sound manager reference
+        this.soundManager = soundManager;
     }
     
     /**
@@ -239,6 +244,76 @@ export class UIManager {
             reactionSection.appendChild(toggleContainer);
             
             settingsContent.appendChild(reactionSection);
+            
+            // Create sound toggle section
+            const soundSection = document.createElement('div');
+            soundSection.className = 'settings-section';
+            
+            const soundTitle = document.createElement('h3');
+            soundTitle.textContent = 'Sound Effects';
+            soundSection.appendChild(soundTitle);
+            
+            // Create toggle switch for sound
+            const soundToggleContainer = document.createElement('div');
+            soundToggleContainer.style.display = 'flex';
+            soundToggleContainer.style.alignItems = 'center';
+            soundToggleContainer.style.marginTop = '10px';
+            
+            const soundToggle = document.createElement('label');
+            soundToggle.className = 'toggle-switch';
+            soundToggle.style.position = 'relative';
+            soundToggle.style.display = 'inline-block';
+            soundToggle.style.width = '60px';
+            soundToggle.style.height = '30px';
+            soundToggle.style.marginRight = '10px';
+            
+            const soundCheckbox = document.createElement('input');
+            soundCheckbox.type = 'checkbox';
+            soundCheckbox.style.opacity = '0';
+            soundCheckbox.style.width = '0';
+            soundCheckbox.style.height = '0';
+            soundCheckbox.checked = this.soundManager.soundEnabled;
+            
+            const soundSlider = document.createElement('span');
+            soundSlider.style.position = 'absolute';
+            soundSlider.style.cursor = 'pointer';
+            soundSlider.style.top = '0';
+            soundSlider.style.left = '0';
+            soundSlider.style.right = '0';
+            soundSlider.style.bottom = '0';
+            soundSlider.style.backgroundColor = soundCheckbox.checked ? '#00ccff' : '#333';
+            soundSlider.style.borderRadius = '30px';
+            soundSlider.style.transition = '.4s';
+            
+            const soundSliderBefore = document.createElement('span');
+            soundSliderBefore.style.position = 'absolute';
+            soundSliderBefore.style.content = '""';
+            soundSliderBefore.style.height = '22px';
+            soundSliderBefore.style.width = '22px';
+            soundSliderBefore.style.left = soundCheckbox.checked ? '34px' : '4px';
+            soundSliderBefore.style.bottom = '4px';
+            soundSliderBefore.style.backgroundColor = 'white';
+            soundSliderBefore.style.borderRadius = '50%';
+            soundSliderBefore.style.transition = '.4s';
+            
+            const soundLabel = document.createElement('span');
+            soundLabel.textContent = 'Enable sound effects';
+            
+            // Add event listener
+            soundCheckbox.addEventListener('change', () => {
+                this.soundManager.toggleSound();
+                soundSliderBefore.style.left = this.soundManager.soundEnabled ? '34px' : '4px';
+                soundSlider.style.backgroundColor = this.soundManager.soundEnabled ? '#00ccff' : '#333';
+            });
+            
+            soundSlider.appendChild(soundSliderBefore);
+            soundToggle.appendChild(soundCheckbox);
+            soundToggle.appendChild(soundSlider);
+            soundToggleContainer.appendChild(soundToggle);
+            soundToggleContainer.appendChild(soundLabel);
+            soundSection.appendChild(soundToggleContainer);
+            
+            settingsContent.appendChild(soundSection);
         }
     }
 }
