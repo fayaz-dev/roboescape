@@ -24,10 +24,10 @@ This game is built with vanilla JavaScript and uses Canvas for rendering graphic
 ### Running Locally
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run development server
-npm run dev
+pnpm run dev
 ```
 
 ### Technologies
