@@ -1,0 +1,17 @@
+{
+  "files.autoSave": "afterDelay",
+  "editor.fontSize": 16,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "./docs/project-overview.md"
+    },
+    {
+      "file": "./docs/tools-used.md"
+    },
+    {
+      "file": "./docs/rules-for-ai-assistant.md"
+    }
+  ]
+}
