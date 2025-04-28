@@ -170,7 +170,7 @@ export class SoundManager {
      */
     setupBackgroundMusic() {
         // Create audio element for background music
-        this.backgroundMusic = new Audio('audio/music.mp3');
+        this.backgroundMusic = new Audio('/audio/music.mp3');
         this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.5;  // Set to 50% volume
         
