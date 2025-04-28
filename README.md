@@ -11,8 +11,8 @@ An action-packed space adventure game where you control Robonaut, humanity's las
 2. Use WASD or Arrow Keys to control Robonaut's spacecraft.
 3. Collect blue exotic particles to increase your data collection score.
 4. Avoid getting too close to the black hole's event horizon.
-5. If trapped in the black hole's pull, you need at least 5 exotic particles to escape.
-6. Press SPACE to use your emergency thrusters and escape (costs 5 exotic particles).
+5. @TODO If trapped in the black hole's pull, you need at least 5 exotic particles to escape.
+6. @TODO Press SPACE to use your emergency thrusters and escape (costs 5 exotic particles).
 
 ## Features
 - Interactive home page with animated background
@@ -22,7 +22,7 @@ An action-packed space adventure game where you control Robonaut, humanity's las
 - Challenging physics-based movement
 
 ## Development
-This game is built with vanilla JavaScript and uses Canvas for rendering graphics.
+This game is built with vanilla JavaScript and uses Canvas (with Three.js) for rendering graphics and Web Audio API for game sounds.
 
 ### Running Locally
 ```bash
