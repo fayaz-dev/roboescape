@@ -19,6 +19,7 @@ An action-packed space adventure game where you control Robonaut, humanity's las
 - Interactive home page with animated background
 - In-game settings for customizing Robonaut's appearance
 - Leaderboard to track data collection scores
+- @TODO: Global Leaderboard with serverside implementation
 - Responsive gameplay with smooth animations
 - Challenging physics-based movement
 
