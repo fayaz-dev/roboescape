@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preview": "vite preview --host",
+    "stage": "vite build && vite preview --host"
   },
   "keywords": [],
   "author": "",
