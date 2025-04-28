@@ -518,6 +518,37 @@
             border: 2px solid #fff;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
+        /* Sound toggle button styles */
+        #sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 2px solid #00ccff;
+            color: #00ccff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.2s ease;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+        }
+
+        #sound-toggle:hover {
+            background-color: rgba(0, 204, 255, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.7);
+        }
+
+        #sound-toggle:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
