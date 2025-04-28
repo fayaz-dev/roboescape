@@ -41,4 +41,4 @@ pnpm run dev
 - Vite (for development tooling)
 
 ## Credits
-- Design & Development: Fayaz Ahmed
+- Design & Development: [Fayaz Ahmed](https://x.com/fayazDev)
