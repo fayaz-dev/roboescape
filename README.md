@@ -13,6 +13,7 @@ An action-packed space adventure game where you control Robonaut, humanity's las
 4. Avoid getting too close to the black hole's event horizon.
 5. @TODO If trapped in the black hole's pull, you need at least 5 exotic particles to escape.
 6. @TODO Press SPACE to use your emergency thrusters and escape (costs 5 exotic particles).
+7. @TODO make the gameplay mobile friendly.
 
 ## Features
 - Interactive home page with animated background
