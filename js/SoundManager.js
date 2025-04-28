@@ -292,11 +292,11 @@ export class SoundManager {
             gainNode.connect(this.audioContext.destination);
             
             // Configure oscillator
-            osc.type = 'sawtooth';
+            osc.type = 'triangle';
             
             // Create a downward sweep
             osc.frequency.setValueAtTime(880, this.audioContext.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(55, this.audioContext.currentTime + 1.5);
+            osc.frequency.exponentialRampToValueAtTime(55, this.audioContext.currentTime + 2.5);
             
             // Envelope
             gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
