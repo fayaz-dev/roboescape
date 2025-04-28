@@ -9,6 +9,9 @@ export class SoundManager {
         
         // Initialize audio enabled state (default: enabled)
         this.soundEnabled = true;
+
+        // Flag for audio worklet initialization
+        this.audioWorkletInitialized = false;
         
         // Try to get saved sound preference
         const savedSoundPreference = localStorage.getItem('soundEnabled');
@@ -56,12 +59,27 @@ export class SoundManager {
     /**
      * Initialize the Web Audio API context
      */
-    initAudioContext() {
+    async initAudioContext() {
         if (this.audioContext) return; // Already initialized
         
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
+            
+            // Load and initialize the AudioWorklet for noise generation
+            if (this.audioContext.audioWorklet) {
+                try {
+                    await this.audioContext.audioWorklet.addModule('./js/audio-processors/noise-processor.js');
+                    this.audioWorkletInitialized = true;
+                    console.log('Audio worklet initialized successfully');
+                } catch (err) {
+                    console.warn('Failed to initialize audio worklet, falling back to alternative methods', err);
+                    this.audioWorkletInitialized = false;
+                }
+            } else {
+                console.warn('AudioWorklet not supported in this browser, falling back to alternative methods');
+                this.audioWorkletInitialized = false;
+            }
             
             // Create and cache all sounds
             this.createSounds();
@@ -195,28 +213,48 @@ export class SoundManager {
             if (!this.soundEnabled || !this.audioContext) return;
             
             // Create a low rumbling sound with noise
-            const bufferSize = 4096;
-            const noiseNode = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+            let noiseNode;
             const gainNode = this.audioContext.createGain();
             const filter = this.audioContext.createBiquadFilter();
             
-            // Connect nodes
-            noiseNode.connect(filter);
-            filter.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
+            // Use AudioWorkletNode if initialized, otherwise fallback to audio buffer
+            if (this.audioWorkletInitialized) {
+                // Create noise using AudioWorkletNode
+                noiseNode = new AudioWorkletNode(this.audioContext, 'noise-processor');
+                
+                // Connect nodes
+                noiseNode.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+            } else {
+                // Fallback: Create noise using AudioBuffer
+                const bufferSize = this.audioContext.sampleRate * 2; // 2 seconds of noise
+                const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                // Fill the buffer with white noise
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                // Create buffer source
+                noiseNode = this.audioContext.createBufferSource();
+                noiseNode.buffer = noiseBuffer;
+                
+                // Connect nodes
+                noiseNode.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // Start the source
+                noiseNode.start();
+                noiseNode.stop(this.audioContext.currentTime + 2);
+            }
             
             // Configure filter
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
             filter.Q.setValueAtTime(10, this.audioContext.currentTime);
-            
-            // White noise generator
-            noiseNode.onaudioprocess = (e) => {
-                const output = e.outputBuffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = Math.random() * 2 - 1;
-                }
-            };
             
             // Volume envelope
             gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
@@ -228,7 +266,9 @@ export class SoundManager {
             
             // Clean up
             setTimeout(() => {
-                noiseNode.disconnect();
+                if (this.audioWorkletInitialized) {
+                    noiseNode.disconnect();
+                }
                 gainNode.disconnect();
                 filter.disconnect();
             }, 2000);
@@ -443,11 +483,11 @@ export class SoundManager {
     /**
      * Play game start/restart sound
      */
-    playGameStart() {
+    async playGameStart() {
         if (this.sounds.gameStart) {
             this.sounds.gameStart();
         } else {
-            this.initAudioContext();
+            await this.initAudioContext();
             this.createSounds();
             if (this.sounds.gameStart) {
                 this.sounds.gameStart();
