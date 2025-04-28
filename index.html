@@ -522,7 +522,7 @@
         #sound-toggle {
             position: fixed;
             top: 20px;
-            right: 20px;
+            right: 70px; /* Moved slightly to the left to make room for music toggle */
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -547,6 +547,38 @@
         }
 
         #sound-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* Music toggle button styles */
+        #music-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 2px solid #ff6bd6; /* Different color to distinguish from sound toggle */
+            color: #ff6bd6;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.2s ease;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(255, 107, 214, 0.5);
+        }
+
+        #music-toggle:hover {
+            background-color: rgba(255, 107, 214, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 107, 214, 0.7);
+        }
+
+        #music-toggle:active {
             transform: scale(0.95);
         }
     </style>

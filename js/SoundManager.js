@@ -10,13 +10,25 @@ export class SoundManager {
         // Initialize audio enabled state (default: enabled)
         this.soundEnabled = true;
 
+        // Initialize music enabled state (default: enabled)
+        this.musicEnabled = true;
+
         // Flag for audio worklet initialization
         this.audioWorkletInitialized = false;
+        
+        // Background music element
+        this.backgroundMusic = null;
         
         // Try to get saved sound preference
         const savedSoundPreference = localStorage.getItem('soundEnabled');
         if (savedSoundPreference !== null) {
             this.soundEnabled = savedSoundPreference === 'true';
+        }
+        
+        // Try to get saved music preference
+        const savedMusicPreference = localStorage.getItem('musicEnabled');
+        if (savedMusicPreference !== null) {
+            this.musicEnabled = savedMusicPreference === 'true';
         }
         
         // Sound banks for different effects
@@ -43,10 +55,23 @@ export class SoundManager {
         // Add sound toggle button to the UI
         this.createSoundToggle();
         
+        // Add music toggle button to the UI
+        this.createMusicToggle();
+        
+        // Setup background music
+        this.setupBackgroundMusic();
+        
         // We defer creating the audio context until first user interaction
         // This is because browsers require user interaction before creating AudioContext
         document.addEventListener('click', () => {
             this.initAudioContext();
+            
+            // Start playing background music after first interaction if enabled
+            if (this.musicEnabled && this.backgroundMusic) {
+                this.backgroundMusic.play().catch(err => {
+                    console.warn('Failed to play background music', err);
+                });
+            }
         }, { once: true });
         
         // Listen for particle collection events
@@ -121,6 +146,41 @@ export class SoundManager {
     }
     
     /**
+     * Create music toggle button 
+     */
+    createMusicToggle() {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'music-toggle';
+        toggleBtn.innerHTML = this.musicEnabled ? '🎵' : '🔇';
+        toggleBtn.title = this.musicEnabled ? 'Music On' : 'Music Off';
+        
+        // Toggle functionality
+        toggleBtn.addEventListener('click', () => {
+            this.toggleMusic();
+            toggleBtn.innerHTML = this.musicEnabled ? '🎵' : '🔇';
+            toggleBtn.title = this.musicEnabled ? 'Music On' : 'Music Off';
+        });
+        
+        // Add to DOM
+        document.body.appendChild(toggleBtn);
+    }
+    
+    /**
+     * Setup background music audio element
+     */
+    setupBackgroundMusic() {
+        // Create audio element for background music
+        this.backgroundMusic = new Audio('audio/music.mp3');
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.volume = 0.5;  // Set to 50% volume
+        
+        // Set initial state based on user preference
+        if (!this.musicEnabled) {
+            this.backgroundMusic.pause();
+        }
+    }
+    
+    /**
      * Toggle sound on/off
      */
     toggleSound() {
@@ -136,6 +196,30 @@ export class SoundManager {
         
         // Dispatch event so other components can respond to sound toggle
         window.dispatchEvent(new CustomEvent('soundToggled', { detail: { enabled: this.soundEnabled } }));
+    }
+    
+    /**
+     * Toggle music on/off
+     */
+    toggleMusic() {
+        this.musicEnabled = !this.musicEnabled;
+        
+        // Save preference to localStorage
+        localStorage.setItem('musicEnabled', this.musicEnabled.toString());
+        
+        // Play or pause the music based on the new state
+        if (this.backgroundMusic) {
+            if (this.musicEnabled) {
+                this.backgroundMusic.play().catch(err => {
+                    console.warn('Failed to play background music', err);
+                });
+            } else {
+                this.backgroundMusic.pause();
+            }
+        }
+        
+        // Dispatch event so other components can respond to music toggle
+        window.dispatchEvent(new CustomEvent('musicToggled', { detail: { enabled: this.musicEnabled } }));
     }
     
     /**
