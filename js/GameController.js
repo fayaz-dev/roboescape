@@ -153,6 +153,12 @@ export class GameController {
         // Draw exotic particle count with color coding
         ctx.fillStyle = this.player.dataShards < 0 ? '#ff3333' : '#00ffff';
         ctx.fillText(`Exotic Particles: ${this.player.dataShards}`, 20, 100);
+        
+        // Show speed boost indicator when active
+        if (this.player.speedBoostActive) {
+            ctx.fillStyle = '#ffcc00'; // Bright yellow/gold for boost indicator
+            ctx.fillText('SPEED BOOST ACTIVE (-1 particle/sec)', 20, 130);
+        }
 
         // Show warning when trapped in black hole
         if (this.player.isTrapped) {
@@ -173,6 +179,13 @@ export class GameController {
                         this.sceneManager.centerX, 60);
                 }
             }
+            ctx.textAlign = 'left';
+        } else if (this.gameTime < 10) {
+            // Show speed boost tip during the first 10 seconds of gameplay
+            ctx.fillStyle = '#66ff66';
+            ctx.textAlign = 'center';
+            ctx.fillText('TIP: Hold SPACEBAR for speed boost (-1 particle/sec)', 
+                this.sceneManager.centerX, 60);
             ctx.textAlign = 'left';
         }
     }

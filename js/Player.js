@@ -28,6 +28,11 @@ export class Player {
         this.escapeBoostActive = false;
         this.escapeBoostDuration = 0;
 
+        // Speed boost properties
+        this.speedBoostActive = false;
+        this.lastSpeedBoostCostTime = 0;
+        this.speedBoostCostInterval = 1; // 1 second interval for consuming particles
+
         // 3D model properties
         this.scene = null;
         this.camera = null;
@@ -425,6 +430,23 @@ export class Player {
                 }
             }
         }
+        
+        // Handle speed boost and particle consumption
+        if (this.speedBoostActive && this.dataShards > 0) {
+            const currentTime = Date.now();
+            if (currentTime - this.lastSpeedBoostCostTime >= this.speedBoostCostInterval * 1000) {
+                this.dataShards = Math.max(0, this.dataShards - 1);
+                this.lastSpeedBoostCostTime = currentTime;
+                
+                // If we ran out of particles, deactivate speed boost
+                if (this.dataShards <= 0) {
+                    this.speedBoostActive = false;
+                }
+            }
+        } else if (this.speedBoostActive && this.dataShards <= 0) {
+            // No particles left, can't boost
+            this.speedBoostActive = false;
+        }
 
         // Determine if player is actively moving with jetpack
         const isUsingJetpack = this.isMoving.up || this.isMoving.down || 
@@ -436,10 +458,13 @@ export class Player {
         // Apply player input as acceleration
         const acceleration = { x: 0, y: 0 };
         
-        if (this.isMoving.up) acceleration.y -= this.speed;
-        if (this.isMoving.down) acceleration.y += this.speed;
-        if (this.isMoving.left) acceleration.x -= this.speed;
-        if (this.isMoving.right) acceleration.x += this.speed;
+        // Calculate current speed based on speed boost status
+        let currentSpeed = this.speedBoostActive ? this.speed * 3 : this.speed;
+        
+        if (this.isMoving.up) acceleration.y -= currentSpeed;
+        if (this.isMoving.down) acceleration.y += currentSpeed;
+        if (this.isMoving.left) acceleration.x -= currentSpeed;
+        if (this.isMoving.right) acceleration.x += currentSpeed;
         
         // Apply acceleration to velocity
         this.velocity.x += acceleration.x * deltaTime;
@@ -569,10 +594,12 @@ export class Player {
         this.velocity.x *= this.drag;
         this.velocity.y *= this.drag;
         
-        // Cap maximum speed
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        if (currentSpeed > this.maxSpeed) {
-            const scale = this.maxSpeed / currentSpeed;
+        // Cap maximum speed - 3x during speed boost
+        currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const maxSpeedLimit = this.speedBoostActive ? this.maxSpeed * 3 : this.maxSpeed;
+        
+        if (currentSpeed > maxSpeedLimit) {
+            const scale = maxSpeedLimit / currentSpeed;
             this.velocity.x *= scale;
             this.velocity.y *= scale;
         }
@@ -699,6 +726,9 @@ export class Player {
                 this.velocity.x * this.velocity.x + 
                 this.velocity.y * this.velocity.y
             );
+            
+            // Boost flame effects when speed boost is active
+            const boostMultiplier = this.speedBoostActive ? 1.8 : 1.0;
             const movementIntensity = Math.min(1, velocityMagnitude / this.maxSpeed);
             
             // Apply flame effects to each visible flame
@@ -729,7 +759,7 @@ export class Player {
                 }
                 
                 // Make flame size responsive to velocity with randomized pulsing
-                const baseScale = 0.8 + (directionIntensity * 0.6);
+                const baseScale = (0.8 + (directionIntensity * 0.6)) * boostMultiplier;
                 const pulseScale = baseScale + Math.sin((Date.now() + Math.random() * 500) * 0.01) * 0.2;
                 
                 // Scale flame with direction-specific length
@@ -834,7 +864,12 @@ export class Player {
     handleKeydown(e) {
         switch(e.key) {
             case ' ': // Spacebar
-                this.tryEscape();
+                if (this.isTrapped) {
+                    this.tryEscape();
+                } else if (this.dataShards > 0) {
+                    // Only activate speed boost if we have particles
+                    this.speedBoostActive = true;
+                }
                 break;
             case 'ArrowUp':
             case 'w':
@@ -861,6 +896,9 @@ export class Player {
     
     handleKeyup(e) {
         switch(e.key) {
+            case ' ': // Spacebar
+                this.speedBoostActive = false;
+                break;
             case 'ArrowUp':
             case 'w':
                 this.isMoving.up = false;
@@ -958,6 +996,10 @@ export class Player {
         // Reset escape boost flags
         this.escapeBoostActive = false;
         this.escapeBoostDuration = 0;
+        
+        // Reset speed boost flags
+        this.speedBoostActive = false;
+        this.lastSpeedBoostCostTime = 0;
         
         // Update robot size in case window size changed
         this.updateRobotSize();
