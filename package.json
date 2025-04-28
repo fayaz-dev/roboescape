@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Robonaut's Quest to Blackhole",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
