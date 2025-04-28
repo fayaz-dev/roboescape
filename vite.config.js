@@ -7,12 +7,12 @@ export default defineConfig({
     // Merged the rollupOptions from the second build key
     rollupOptions: {
       input: {
-        main: '/index.htm'
+        main: '/home.html'
       }
     }
   },
   server: {
-    open: 'index.htm'
+    open: 'home.html'
   },
   // Specify the custom entry point
   appType: 'spa'
