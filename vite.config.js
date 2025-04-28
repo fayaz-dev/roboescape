@@ -4,18 +4,16 @@ export default defineConfig({
   root: '.',
   build: {
     outDir: 'dist',
-  },
-  server: {
-    open: true
-  },
-  // Specify the custom entry point
-  appType: 'spa',
-  // Use index.htm instead of index.html
-  build: {
+    // Merged the rollupOptions from the second build key
     rollupOptions: {
       input: {
         main: '/index.htm'
       }
     }
-  }
+  },
+  server: {
+    open: true
+  },
+  // Specify the custom entry point
+  appType: 'spa'
 })
