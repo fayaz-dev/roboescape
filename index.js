@@ -8,9 +8,17 @@ import { Settings } from './js/Settings.js';
 import { HomeBackground } from './js/HomeBackground.js';
 import uiManager from './js/UIManager.js';
 import soundManager from './js/SoundManager.js';
+import { initPerformanceOptimizations } from './js/utils/performance.js';
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize performance optimizations first
+    const performanceOptions = {
+        adaptiveQuality: true,
+        enablePoolCleanup: true
+    };
+    initPerformanceOptimizations(performanceOptions);
+    
     const homePage = document.getElementById('home-page');
     const homeBackgroundCanvas = document.getElementById('home-background');
     const startButton = document.getElementById('start-button');

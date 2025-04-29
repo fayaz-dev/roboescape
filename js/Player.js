@@ -850,9 +850,21 @@ export class Player {
     }
     
     draw() {
-        // Render the 3D model to an offscreen canvas
-        this.renderer.setSize(this.robotSize, this.robotSize); // Use dynamic size
-        this.renderer.render(this.scene, this.camera);
+        // Limit the render rate for 3D robot to improve performance
+        const now = performance.now();
+        const renderInterval = this.speedBoostActive ? 20 : 33; // 50 or 30 FPS for 3D rendering
+        
+        // Only render 3D model at specified intervals
+        if (!this.lastRenderTime || now - this.lastRenderTime >= renderInterval) {
+            // Renderer optimization - preserve WebGL context
+            if (!this.renderer.setPixelRatio) {
+                this.renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1);
+            }
+            
+            this.renderer.setSize(this.robotSize, this.robotSize, false); // false prevents DOM style updates
+            this.renderer.render(this.scene, this.camera);
+            this.lastRenderTime = now;
+        }
         
         // Draw to the main canvas
         const ctx = this.sceneManager.ctx;

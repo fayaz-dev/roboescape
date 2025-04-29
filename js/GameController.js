@@ -2,6 +2,7 @@ import { Reactions } from './reactions/Reactions.js';
 // Import the EndGameFeedback class from the current directory
 import { EndGameFeedback } from './EndGameFeedback.js';
 import uiManager from './UIManager.js';
+import { PerformanceOptimizer } from './utils/PerformanceOptimizer.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
@@ -24,6 +25,12 @@ export class GameController {
             fadeIn: 0,
             redFlash: 0
         };
+        
+        // Performance optimizations
+        this.animationFrameId = null; // Track animation frame for proper cancellation
+        this.frameCounter = 0; // For throttling certain operations
+        this.lastUpdateTimestamp = 0; // For FPS calculation
+        this.performanceOptimizer = new PerformanceOptimizer(); // Performance optimization utilities
         
         // Callback for when the game ends
         this.onGameOver = onGameOver || function(score, time) {
@@ -284,16 +291,29 @@ export class GameController {
     }
     
     restart() {
+        // Cancel any existing animation frame before restarting
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
         this.gameOver = false;
         this.gameActive = true;
         this.score = 0;
         this.gameTime = 0; // Reset game time
-        this.explosionParticles = [];
+        this.frameCounter = 0;
+        this.lastUpdateTimestamp = performance.now();
+        this.lastTime = performance.now();
+        
+        // Use a more efficient way to clear arrays
+        this.explosionParticles.length = 0; 
+        
         this.gameOverEffects = {
             shake: 0,
             fadeIn: 0,
             redFlash: 0
         };
+        
         this.player.reset();
         this.dataShards.reset();
         this.player.dataShards = 1; // Restart with 1 exotic particle
@@ -350,16 +370,26 @@ export class GameController {
     }
     
     start() {
+        // Cancel any existing animation frame
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        
         this.lastTime = performance.now();
-        requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
     }
     
     // New method to only animate background elements without gameplay
     animateOnly() {
+        // Cancel any existing animation frame
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+        
         this.lastTime = performance.now();
         this.gameOver = false;
         this.gameActive = false; // Game not active yet
-        requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
     }
     
     // New method to actually start the game
@@ -519,8 +549,18 @@ export class GameController {
     }
     
     gameLoop(currentTime) {
-        const deltaTime = (currentTime - this.lastTime) / 1000;
+        // Calculate accurate deltaTime with max value clamping to prevent huge jumps
+        let deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1); // Cap at 100ms
         this.lastTime = currentTime;
+        
+        // Update performance metrics
+        this.performanceOptimizer.measureFrameRate(currentTime);
+        
+        // Skip frame if browser tab is inactive (deltaTime too large)
+        if (deltaTime > 0.05 && !document.hasFocus()) {
+            this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+            return;
+        }
         
         // Update universe rotation
         this.sceneManager.updateUniverseRotation(deltaTime);
@@ -529,7 +569,14 @@ export class GameController {
         this.sceneManager.clear();
         
         // Always update starfield and black hole for visual effect
-        this.starfield.update(deltaTime);
+        // Use quality-based rendering for starfield
+        if (this.performanceOptimizer.shouldRender('starfield', {
+            high: 0,      // Every frame on high quality
+            medium: 0,    // Every frame on medium quality
+            low: 16       // Every other frame on low quality (approximately 60fps -> 30fps)
+        })) {
+            this.starfield.update(deltaTime);
+        }
         
         if (this.gameActive && !this.gameOver) {
             // Active gameplay
@@ -540,11 +587,20 @@ export class GameController {
             this.blackHole.gameTime = this.gameTime;
             
             this.blackHole.update(deltaTime, this.player); // Pass player to blackHole
+            
             // Pass the blackHole to the player update method
             this.player.update(deltaTime, this.blackHole);
-            this.dataShards.update(deltaTime, this.player);
             
-            // Check for collisions
+            // Update particles - quality based rendering
+            if (this.performanceOptimizer.shouldRender('exotic_particles', {
+                high: 0,     // Every frame on high quality
+                medium: 16,  // Every other frame on medium quality
+                low: 33      // Every third frame on low quality
+            })) {
+                this.dataShards.update(deltaTime, this.player);
+            }
+            
+            // Check for collisions - this must run every frame for gameplay
             this.checkCollisions();
             
             // Draw score
@@ -558,8 +614,15 @@ export class GameController {
             this.blackHole.update(deltaTime, null);
         }
         
-        // Continue the game loop
-        requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        // Optional performance debug overlay
+        if (this.settings && this.settings.debugMode) {
+            this.drawPerformanceDebug();
+        }
+        
+        // Continue the game loop using the callback pattern for better performance
+        if (window.requestAnimationFrame) {
+            this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        }
     }
 
     handlePlayerDestroyed() {
@@ -580,5 +643,22 @@ export class GameController {
                 };
             }
         }
+    }
+    
+    drawPerformanceDebug() {
+        const ctx = this.sceneManager.ctx;
+        const info = this.performanceOptimizer.getDebugInfo();
+        
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(this.sceneManager.width - 150, 10, 140, 70);
+        
+        ctx.fillStyle = info.fps < 30 ? '#ff5555' : info.fps < 50 ? '#ffff55' : '#55ff55';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`FPS: ${info.fps}`, this.sceneManager.width - 140, 30);
+        ctx.fillText(`Frame: ${info.averageFrameTime}ms`, this.sceneManager.width - 140, 50);
+        ctx.fillText(`Quality: ${info.qualityLevel}`, this.sceneManager.width - 140, 70);
+        ctx.restore();
     }
 }

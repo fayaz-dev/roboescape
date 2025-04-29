@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ObjectPool } from './utils/ObjectPool.js';
 
 export class Starfield {
     constructor() {
@@ -16,10 +17,43 @@ export class Starfield {
             '#ff69b4', // hotpink
             '#00ff7f'  // springgreen
         ];
+        
+        // Performance optimizations
+        this.frameCounter = 0;
+        this.updateInterval = 1; // Update every frame by default
+        
+        // Object pools
+        this.shredPool = new ObjectPool(
+            () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, color: this.starColors[0] }),
+            (shred, x, y, vx, vy, life, color) => {
+                shred.x = x;
+                shred.y = y;
+                shred.vx = vx;
+                shred.vy = vy;
+                shred.life = life;
+                shred.color = color;
+                return shred;
+            }
+        );
+        
+        // Pre-calculated values for performance
+        this.preCalculated = {
+            maxDimension: 1000, // Will be updated in init
+            centerX: 500,       // Will be updated in init
+            centerY: 500        // Will be updated in init
+        };
     }
     
     init(sceneManager) {
         this.sceneManager = sceneManager;
+        
+        // Precalculate frequently used values
+        this.preCalculated = {
+            maxDimension: Math.max(sceneManager.width, sceneManager.height),
+            centerX: sceneManager.centerX,
+            centerY: sceneManager.centerY
+        };
+        
         this.createStars();
         this.createGalaxies();
     }
@@ -87,22 +121,33 @@ export class Starfield {
         const particleCount = 15;
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
-            this.shreds.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * (Math.random() * 2 + 2),
-                vy: Math.sin(angle) * (Math.random() * 2 + 2),
-                life: 1.0,
-                color: this.starColors[Math.floor(Math.random() * this.starColors.length)]
-            });
+            const vx = Math.cos(angle) * (Math.random() * 2 + 2);
+            const vy = Math.sin(angle) * (Math.random() * 2 + 2);
+            const color = this.starColors[(Math.random() * this.starColors.length) | 0];
+            
+            // Get shred from object pool
+            const shred = this.shredPool.get(x, y, vx, vy, 1.0, color);
+            this.shreds.push(shred);
         }
     }
     
     update(deltaTime) {
+        // Incremental frame counter for throttling
+        this.frameCounter = (this.frameCounter + 1) % 1000;
+        
         const ctx = this.sceneManager.ctx;
-        const blackHoleCenterX = this.sceneManager.blackHole ? this.sceneManager.blackHole.x : this.sceneManager.centerX;
-        const blackHoleCenterY = this.sceneManager.blackHole ? this.sceneManager.blackHole.y : this.sceneManager.centerY;
+        const centerX = this.sceneManager.centerX;
+        const centerY = this.sceneManager.centerY;
+        const rotationSpeed = this.sceneManager.universeRotationSpeed;
+        const blackHoleCenterX = this.sceneManager.blackHole ? this.sceneManager.blackHole.x : centerX;
+        const blackHoleCenterY = this.sceneManager.blackHole ? this.sceneManager.blackHole.y : centerY;
         const blackHoleRadius = this.sceneManager.blackHole ? this.sceneManager.blackHole.radius : 50;
+        
+        // Cache to improve performance with multiple calculations
+        const rotationMatrix = {
+            cos: Math.cos(rotationSpeed * deltaTime * 60),
+            sin: Math.sin(rotationSpeed * deltaTime * 60)
+        };
         
         // Update and draw galaxies
         for (const galaxy of this.galaxies) {
@@ -222,28 +267,32 @@ export class Starfield {
             shred.y += shred.vy;
             shred.life -= deltaTime;
             
-            // Apply universe rotation to shreds
-            const relX = shred.x - this.sceneManager.centerX;
-            const relY = shred.y - this.sceneManager.centerY;
-            const rotationSpeed = this.sceneManager.universeRotationSpeed;
+            // Apply universe rotation to shreds using pre-calculated rotation matrix
+            const relX = shred.x - centerX;
+            const relY = shred.y - centerY;
             
-            // Calculate rotation-induced velocity
-            const rotationVelocityX = -relY * rotationSpeed;
-            const rotationVelocityY = relX * rotationSpeed;
-            
-            // Apply rotation to shred position
-            shred.x += rotationVelocityX * 60 * deltaTime;
-            shred.y += rotationVelocityY * 60 * deltaTime;
+            // Faster rotation calculation using pre-calculated values
+            shred.x = centerX + relX * rotationMatrix.cos - relY * rotationMatrix.sin;
+            shred.y = centerY + relX * rotationMatrix.sin + relY * rotationMatrix.cos;
             
             if (shred.life <= 0) {
-                this.shreds.splice(i, 1);
+                // Return to object pool instead of just removing
+                this.shredPool.release(shred);
+                // Fast array deletion technique (swap with last element and pop)
+                const lastShred = this.shreds.pop();
+                if (i < this.shreds.length) {
+                    this.shreds[i] = lastShred;
+                }
                 continue;
             }
             
-            ctx.beginPath();
-            ctx.arc(shred.x, shred.y, 1, 0, Math.PI * 2);
-            ctx.fillStyle = shred.color.replace(')', `,${shred.life})`);
-            ctx.fill();
+            // Draw only every other frame for shreds when there are many
+            if (this.shreds.length < 50 || i % 2 === this.frameCounter % 2) {
+                ctx.beginPath();
+                ctx.arc(shred.x, shred.y, 1, 0, Math.PI * 2);
+                ctx.fillStyle = shred.color.replace(')', `,${shred.life})`);
+                ctx.fill();
+            }
         }
     }
 }

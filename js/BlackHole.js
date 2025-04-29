@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PlasmaParticlePool } from './utils/PlasmaParticlePool.js';
 
 export class BlackHole {
     constructor() {
@@ -18,6 +19,9 @@ export class BlackHole {
         this.plasmaParticles = [];
         this.accretionParticles = [];
         this.lastShredTime = 0;
+        
+        // Optimization: Use object pool for plasma particles
+        this.plasmaPool = new PlasmaParticlePool(150);
 
         // Game time tracking for difficulty scaling
         this.gameTime = 0;
@@ -72,20 +76,25 @@ export class BlackHole {
     }
     
     createPlasmaJet(x, y, angle) {
+        // Performance optimization - limit total number of particles
+        if (this.plasmaParticles.length > 300) {
+            // Skip creating new particles when there are too many
+            return;
+        }
+        
         const particleCount = 5;
         for (let i = 0; i < particleCount; i++) {
             const speed = 5 + Math.random() * 3;
             const spread = 0.2;
             const particleAngle = angle + (Math.random() - 0.5) * spread;
-            this.plasmaParticles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(particleAngle) * speed,
-                vy: Math.sin(particleAngle) * speed,
-                life: 1.0,
-                size: 2 + Math.random() * 2,
-                color: `hsla(${280 + Math.random() * 60}, 100%, 70%, `
-            });
+            const vx = Math.cos(particleAngle) * speed;
+            const vy = Math.sin(particleAngle) * speed;
+            const size = 2 + Math.random() * 2;
+            const color = `hsla(${280 + Math.random() * 60}, 100%, 70%, `;
+            
+            // Get particle from pool and add to active particles
+            const particle = this.plasmaPool.get(x, y, vx, vy, size, color);
+            this.plasmaParticles.push(particle);
         }
     }
     
@@ -183,28 +192,63 @@ export class BlackHole {
         // Update rotation offset from universe rotation
         this.rotationOffset += this.sceneManager.universeRotationSpeed * deltaTime;
         
-        // Update plasma particles with universe rotation
+        // Pre-calculation of rotation matrix for better performance
+        const rotationSpeed = this.sceneManager.universeRotationSpeed;
+        const centerX = this.sceneManager.centerX;
+        const centerY = this.sceneManager.centerY;
+        const rotAngle = rotationSpeed * deltaTime * 60;
+        const rotCos = Math.cos(rotAngle);
+        const rotSin = Math.sin(rotAngle);
+        
+        // Update plasma particles with universe rotation - process in batches for better performance
+        const batchSize = 20; // Process this many particles at once
+        const batches = Math.ceil(this.plasmaParticles.length / batchSize);
+        let particleIndex = 0;
+        
+        // Process particles in batches
+        for (let batch = 0; batch < batches; batch++) {
+            const endIndex = Math.min(particleIndex + batchSize, this.plasmaParticles.length);
+            
+            // Process current batch
+            for (let i = particleIndex; i < endIndex; i++) {
+                const particle = this.plasmaParticles[i];
+                
+                // Apply basic movement
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= deltaTime * 2;
+                
+                // Apply rotation using pre-calculated values for better performance
+                const relX = particle.x - centerX;
+                const relY = particle.y - centerY;
+                
+                // Combine movement calculations to reduce operations
+                particle.x = centerX + relX * rotCos - relY * rotSin;
+                particle.y = centerY + relX * rotSin + relY * rotCos;
+                
+                // Mark for removal if expired
+                if (particle.life <= 0) {
+                    // Set flag for later batch processing
+                    particle.expired = true;
+                }
+            }
+            
+            particleIndex = endIndex;
+        }
+        
+        // Process removals separately to avoid modifying array during iteration
         for (let i = this.plasmaParticles.length - 1; i >= 0; i--) {
-            const particle = this.plasmaParticles[i];
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            particle.life -= deltaTime * 2;
-            
-            // Apply universe rotation to plasma particles
-            const relX = particle.x - this.sceneManager.centerX;
-            const relY = particle.y - this.sceneManager.centerY;
-            const rotationSpeed = this.sceneManager.universeRotationSpeed;
-            
-            // Calculate rotation-induced velocity
-            const rotationVelocityX = -relY * rotationSpeed;
-            const rotationVelocityY = relX * rotationSpeed;
-            
-            // Apply rotation to plasma particle position
-            particle.x += rotationVelocityX * 60 * deltaTime;
-            particle.y += rotationVelocityY * 60 * deltaTime;
-            
-            if (particle.life <= 0) {
-                this.plasmaParticles.splice(i, 1);
+            if (this.plasmaParticles[i].expired) {
+                const particle = this.plasmaParticles[i];
+                
+                // Return to pool
+                this.plasmaPool.release(particle);
+                
+                // Fast removal using pop and swap
+                if (i < this.plasmaParticles.length - 1) {
+                    this.plasmaParticles[i] = this.plasmaParticles[this.plasmaParticles.length - 1];
+                }
+                this.plasmaParticles.pop();
             }
         }
         
@@ -249,14 +293,47 @@ export class BlackHole {
             ctx.stroke();
         }
         
-        // Update and draw plasma particles
-        for (let i = this.plasmaParticles.length - 1; i >= 0; i--) {
+        // Draw plasma particles with optimized batching
+        const particleCount = this.plasmaParticles.length;
+        const maxParticleCount = 300;
+        
+        // Optimize drawing by limiting the number of particles drawn when there are many
+        // For large particle counts, draw only a subset to maintain performance
+        const skipFactor = particleCount > maxParticleCount ? Math.floor(particleCount / maxParticleCount) : 1;
+        
+        // Group particles with similar opacity to reduce state changes
+        const opacityGroups = {};
+        
+        // Group particles by their life value (opacity) rounded to 0.1
+        for (let i = 0; i < particleCount; i += skipFactor) {
             const particle = this.plasmaParticles[i];
+            if (!particle) continue;
             
-            ctx.beginPath();
-            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-            ctx.fillStyle = particle.color + particle.life + ')';
-            ctx.fill();
+            // Round to nearest 0.1 for grouping
+            const opacityKey = Math.round(particle.life * 10) / 10;
+            
+            if (!opacityGroups[opacityKey]) {
+                opacityGroups[opacityKey] = [];
+            }
+            
+            opacityGroups[opacityKey].push(particle);
+        }
+        
+        // Draw particles grouped by opacity
+        for (const opacityKey in opacityGroups) {
+            const particleGroup = opacityGroups[opacityKey];
+            const opacity = parseFloat(opacityKey);
+            
+            // Set style once for the batch
+            ctx.fillStyle = `hsla(305, 100%, 70%, ${opacity})`;
+            
+            // Draw all particles in this group
+            for (let i = 0; i < particleGroup.length; i++) {
+                const particle = particleGroup[i];
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
         
         // Draw accretion disk with dynamic particles that follow universe rotation
