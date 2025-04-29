@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ExoticParticleFactory } from './particles/ExoticParticleFactory.js';
-import { ObjectPool } from './utils/ObjectPool.js';
+import ObjectPool from './utils/ObjectPool.js';
 
 export class ExoticParticles {
     constructor() {

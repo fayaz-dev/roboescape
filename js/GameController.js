@@ -2,7 +2,7 @@ import { Reactions } from './reactions/Reactions.js';
 // Import the EndGameFeedback class from the current directory
 import { EndGameFeedback } from './EndGameFeedback.js';
 import uiManager from './UIManager.js';
-import { PerformanceOptimizer } from './utils/PerformanceOptimizer.js';
+import PerformanceOptimizer from './utils/PerformanceOptimizer.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {

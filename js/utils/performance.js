@@ -2,8 +2,8 @@
  * Performance optimization manager for RoboEscape game
  * Centralizes performance optimization configurations and utilities
  */
-import { PerformanceOptimizer } from './PerformanceOptimizer.js';
-import { ObjectPool } from './ObjectPool.js';
+import PerformanceOptimizer from './PerformanceOptimizer.js';
+import ObjectPool from './ObjectPool.js';
 
 // Create and export a single instance of the performance optimizer
 export const performanceOptimizer = new PerformanceOptimizer();
