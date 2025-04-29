@@ -58,6 +58,7 @@ export class Player {
         this.maxGlowIntensity = 3; // Maximum glow intensity
         this.glowDecayRate = 0.5; // How quickly glow fades per second
         this.glowColor = new THREE.Color(0x00ffff); // Cyan color for glow
+        this.lastParticleValue = 1; // Track the score of the last collected particle
 
         // Universe rotation properties
         this.affectedByRotation = true; // By default, player is affected by universe rotation
@@ -233,12 +234,14 @@ export class Player {
         this.robot.add(body);
         
         // Add a glow sphere around the robot
-        const glowGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+        const glowGeometry = new THREE.SphereGeometry(1.0, 32, 32); // Slightly smaller default size
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: true,
             opacity: 0.0, // Start invisible
-            blending: THREE.AdditiveBlending
+            blending: THREE.AdditiveBlending, 
+            depthWrite: false, // Prevent depth writing for better glow effect
+            side: THREE.FrontSide // Only render front side for better performance
         });
         this.glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
         this.robot.add(this.glowMesh);
@@ -1070,7 +1073,7 @@ export class Player {
         
         // Make the helmet glow slightly more
         this.helmetMaterial.emissive.copy(this.glowColor);
-        this.helmetMaterial.emissiveIntensity = this.glowIntensity * 0.5; // More noticeable helmet glow
+        this.helmetMaterial.emissiveIntensity = this.glowIntensity * 0.4; // More noticeable helmet glow
         
         // Make the eyes glow much more intensely
         this.eyeMaterial.color.copy(this.glowColor); // Change eye color to match particle
@@ -1097,10 +1100,10 @@ export class Player {
             this.glowMesh.material.color.copy(this.glowColor);
             
             // Update opacity based on glow intensity
-            this.glowMesh.material.opacity = this.glowIntensity * 0.15; // Keep it subtle
+            this.glowMesh.material.opacity = this.glowIntensity * 0.3; // Keep it subtle
             
             // Add pulsing effect to the glow
-            const pulseScale = 1.0 + (Math.sin(Date.now() * 0.003) * 0.1); // Slow gentle pulse
+            const pulseScale = 1.0 + (Math.sin(Date.now() * 0.003) * 0.2); // Slow gentle pulse
             this.glowMesh.scale.set(pulseScale, pulseScale, pulseScale);
         }
     }
@@ -1130,6 +1133,13 @@ export class Player {
         this.blackHoleTimer = 0;
         this.isTrapped = false;
         this.lastShardLossTime = 0;
+        
+        // Reset glow effect properties
+        this.glowIntensity = 0;
+        this.glowColor.set(0x00ffff); // Reset to default cyan
+        this.lastParticleValue = 1;
+        this.updateGlowEffect(); // Apply the reset
+        
         // Reset the drag to default value
         this.drag = this.defaultDrag;
         // Reset escape boost flags
