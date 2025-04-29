@@ -465,21 +465,18 @@ export class Player {
             this.updateGlowEffect();
         }
         
-        // Handle speed boost and particle consumption
-        if (this.speedBoostActive && this.dataShards > 0) {
+        // Handle speed boost and score consumption
+        if (this.speedBoostActive) {
             const currentTime = Date.now();
             if (currentTime - this.lastSpeedBoostCostTime >= this.speedBoostCostInterval * 1000) {
-                this.dataShards = Math.max(0, this.dataShards - 1);
-                this.lastSpeedBoostCostTime = currentTime;
+                // Emit an event to reduce score instead of consuming particles
+                const event = new CustomEvent('speedBoostUsed', {
+                    detail: { cost: 1 }
+                });
+                window.dispatchEvent(event);
                 
-                // If we ran out of particles, deactivate speed boost
-                if (this.dataShards <= 0) {
-                    this.speedBoostActive = false;
-                }
+                this.lastSpeedBoostCostTime = currentTime;
             }
-        } else if (this.speedBoostActive && this.dataShards <= 0) {
-            // No particles left, can't boost
-            this.speedBoostActive = false;
         }
 
         // Determine if player is actively moving with jetpack
@@ -657,17 +654,25 @@ export class Player {
         const isUsingJetpack = this.isMoving.up || this.isMoving.down || 
                            this.isMoving.left || this.isMoving.right;
         
-        // Set overall visibility of jetpack flames
-        this.jetpackFlame.visible = isUsingJetpack;
+        // Set overall visibility of jetpack flames - now includes speed boost
+        this.jetpackFlame.visible = isUsingJetpack || this.speedBoostActive;
         
-        if (isUsingJetpack) {
+        // Find the main thruster flames
+        const mainLeftFlame = this.jetpackFlame.children.find(child => child.name === "mainLeft");
+        const mainRightFlame = this.jetpackFlame.children.find(child => child.name === "mainRight");
+        const leftSideFlame = this.jetpackFlame.children.find(child => child.name === "sideLeft");
+        const rightSideFlame = this.jetpackFlame.children.find(child => child.name === "sideRight");
+        const forwardFlame = this.jetpackFlame.children.find(child => child.name === "forward");
+        
+        if (this.speedBoostActive && !isUsingJetpack) {
+            // When speed boost is active without directional movement, show all flames
+            if (mainLeftFlame) mainLeftFlame.visible = true;
+            if (mainRightFlame) mainRightFlame.visible = true;
+            if (leftSideFlame) leftSideFlame.visible = true;
+            if (rightSideFlame) rightSideFlame.visible = true;
+            if (forwardFlame) forwardFlame.visible = true;
+        } else if (isUsingJetpack) {
             // Control individual flames based on movement direction
-            // Find the main thruster flames
-            const mainLeftFlame = this.jetpackFlame.children.find(child => child.name === "mainLeft");
-            const mainRightFlame = this.jetpackFlame.children.find(child => child.name === "mainRight");
-            const leftSideFlame = this.jetpackFlame.children.find(child => child.name === "sideLeft");
-            const rightSideFlame = this.jetpackFlame.children.find(child => child.name === "sideRight");
-            const forwardFlame = this.jetpackFlame.children.find(child => child.name === "forward");
             
             // Main vertical thrusters are active when moving up
             if (mainLeftFlame) mainLeftFlame.visible = this.isMoving.up;
@@ -900,8 +905,8 @@ export class Player {
             case ' ': // Spacebar
                 if (this.isTrapped) {
                     this.tryEscape();
-                } else if (this.dataShards > 0) {
-                    // Only activate speed boost if we have particles
+                } else {
+                    // Activate speed boost regardless of particles
                     this.speedBoostActive = true;
                 }
                 break;

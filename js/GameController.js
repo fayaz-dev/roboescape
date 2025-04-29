@@ -55,6 +55,17 @@ export class GameController {
         window.addEventListener('playerDestroyed', () => {
             this.handlePlayerDestroyed();
         });
+        
+        // Listen for speed boost usage event
+        window.addEventListener('speedBoostUsed', (event) => {
+            // Only reduce score if we have positive score and game is active
+            if (this.score > 0 && this.gameActive) {
+                this.score = Math.max(0, this.score - event.detail.cost);
+            } else if (this.score <= 0 && this.player.speedBoostActive) {
+                // No score left, notify player to deactivate boost
+                this.player.speedBoostActive = false;
+            }
+        });
     }
     
     setup() {
@@ -157,7 +168,7 @@ export class GameController {
         // Show speed boost indicator when active
         if (this.player.speedBoostActive) {
             ctx.fillStyle = '#ffcc00'; // Bright yellow/gold for boost indicator
-            ctx.fillText('SPEED BOOST ACTIVE (-1 particle/sec)', 20, 130);
+            ctx.fillText('SPEED BOOST ACTIVE (-1 score/sec)', 20, 130);
         }
 
         // Show warning when trapped in black hole
@@ -184,7 +195,7 @@ export class GameController {
             // Show speed boost tip during the first 10 seconds of gameplay
             ctx.fillStyle = '#66ff66';
             ctx.textAlign = 'center';
-            ctx.fillText('TIP: Hold SPACEBAR for speed boost (-1 particle/sec)', 
+            ctx.fillText('TIP: Hold SPACEBAR for speed boost (-1 score/sec)', 
                 this.sceneManager.centerX, 60);
             ctx.textAlign = 'left';
         }
