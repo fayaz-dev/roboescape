@@ -52,6 +52,12 @@ export class Player {
         // Store materials for color updates
         this.bodyMaterial = null;
         this.helmetMaterial = null;
+        
+        // Glow effect properties
+        this.glowIntensity = 0; // Current glow intensity
+        this.maxGlowIntensity = 3; // Maximum glow intensity
+        this.glowDecayRate = 0.5; // How quickly glow fades per second
+        this.glowColor = new THREE.Color(0x00ffff); // Cyan color for glow
 
         // Universe rotation properties
         this.affectedByRotation = true; // By default, player is affected by universe rotation
@@ -89,6 +95,11 @@ export class Player {
         // Listen for game resize events to update robot size
         window.addEventListener('gameResize', () => {
             this.updateRobotSize();
+        });
+        
+        // Listen for particle collection events to trigger glow effect
+        window.addEventListener('particleCollected', (event) => {
+            this.onParticleCollected(event.detail);
         });
     }
     
@@ -181,6 +192,9 @@ export class Player {
         rightEye.position.set(-0.15, 0.95, 0.26); // Adjust z slightly forward
         this.robot.add(rightEye);
         
+        // Store eye materials for glow effects
+        this.eyeMaterial = eyeMaterial;
+        
         // Create antenna
         const antennaGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8);
         const antennaMaterial = new THREE.MeshStandardMaterial({ // Use Standard Material
@@ -217,6 +231,17 @@ export class Player {
         const body = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
         body.position.y = 0.3;
         this.robot.add(body);
+        
+        // Add a glow sphere around the robot
+        const glowGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.0, // Start invisible
+            blending: THREE.AdditiveBlending
+        });
+        this.glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+        this.robot.add(this.glowMesh);
         
         // Create chest panel - make it darker and slightly reflective
         const panelGeometry = new THREE.PlaneGeometry(0.4, 0.3);
@@ -429,6 +454,12 @@ export class Player {
                     this.jetpackFlame.scale.set(1, 1, 1);
                 }
             }
+        }
+        
+        // Update glow effect (decay over time)
+        if (this.glowIntensity > 0) {
+            this.glowIntensity = Math.max(0, this.glowIntensity - (deltaTime * this.glowDecayRate));
+            this.updateGlowEffect();
         }
         
         // Handle speed boost and particle consumption
@@ -966,6 +997,114 @@ export class Player {
         return false;
     }
 
+    onParticleCollected(particleData) {
+        // Increase glow intensity based on the particle's value
+        // Quantum (8-12) > Rare (5-7) > Unstable (3-5) > Normal (1-3)
+        const { type, value } = particleData;
+        
+        // Different types of particles give different glow intensity
+        let glowBoost = 0;
+        
+        switch(type) {
+            case 'quantum':
+                glowBoost = 2.0; // Most powerful glow
+                break;
+            case 'rare':
+                glowBoost = 1.5; // Strong glow
+                break;
+            case 'unstable':
+                glowBoost = 1.0; // Medium glow
+                break;
+            case 'normal':
+            default:
+                glowBoost = 0.5; // Standard glow
+                break;
+        }
+        
+        // Add value-based boost (normalized to 0-1 range based on typical particle values 1-12)
+        glowBoost += value / 12;
+        
+        // Add to current glow intensity, but cap at maximum
+        this.glowIntensity = Math.min(this.maxGlowIntensity, this.glowIntensity + glowBoost);
+        
+        // Set glow color based on particle type
+        switch(type) {
+            case 'quantum':
+                this.glowColor.set(0x00ddff); // Bright cyan
+                break;
+            case 'rare':
+                this.glowColor.set(0xff00ff); // Magenta
+                break;
+            case 'unstable':
+                this.glowColor.set(0xff7700); // Orange
+                break;
+            case 'normal':
+            default:
+                this.glowColor.set(0x00ffff); // Cyan
+                break;
+        }
+    }
+    
+    updateGlowEffect() {
+        // Only proceed if we have materials to update
+        if (!this.bodyMaterial || !this.helmetMaterial || !this.eyeMaterial) return;
+        
+        // Skip if no glow active
+        if (this.glowIntensity <= 0) {
+            // Reset materials to default state
+            this.bodyMaterial.emissive.set(0x000000);
+            this.helmetMaterial.emissive.set(0x000000);
+            this.eyeMaterial.emissiveIntensity = 1.5; // Reset to default
+            
+            // Hide the glow mesh
+            if (this.glowMesh) {
+                this.glowMesh.material.opacity = 0;
+            }
+            return;
+        }
+        
+        // Apply glow to robot materials
+        // Make the body subtly glow
+        this.bodyMaterial.emissive.copy(this.glowColor);
+        this.bodyMaterial.emissiveIntensity = this.glowIntensity * 0.3; // Subtle body glow
+        
+        // Make the helmet glow slightly more
+        this.helmetMaterial.emissive.copy(this.glowColor);
+        this.helmetMaterial.emissiveIntensity = this.glowIntensity * 0.5; // More noticeable helmet glow
+        
+        // Make the eyes glow much more intensely
+        this.eyeMaterial.color.copy(this.glowColor); // Change eye color to match particle
+        this.eyeMaterial.emissive.copy(this.glowColor);
+        this.eyeMaterial.emissiveIntensity = 1.5 + (this.glowIntensity * 1.0); // Intense eye glow
+        
+        // Find indicator lights on robot's chest panel and make them more intense
+        this.robot.children.forEach(child => {
+            if (child.material && child.material.emissive) {
+                // Only affect small elements (lights) but not the main body parts
+                if (child.geometry && 
+                    (child.geometry.type === 'CircleGeometry' || child.geometry.type === 'SphereGeometry') && 
+                    child.geometry.parameters.radius < 0.1) {
+                    // Enhance existing emissive properties
+                    const baseIntensity = child.material.emissiveIntensity || 1.0;
+                    child.material.emissiveIntensity = baseIntensity + (this.glowIntensity * 0.8);
+                }
+            }
+        });
+        
+        // Update glow sphere
+        if (this.glowMesh) {
+            // Update glow color
+            this.glowMesh.material.color.copy(this.glowColor);
+            
+            // Update opacity based on glow intensity
+            this.glowMesh.material.opacity = this.glowIntensity * 0.15; // Keep it subtle
+            
+            // Add pulsing effect to the glow
+            const pulseScale = 1.0 + (Math.sin(Date.now() * 0.003) * 0.1); // Slow gentle pulse
+            this.glowMesh.scale.set(pulseScale, pulseScale, pulseScale);
+        }
+    }
+    
     checkCollision(object) {
         const dx = this.x - object.x;
         const dy = this.y - object.y;
@@ -1029,5 +1168,10 @@ export class Player {
                 }
             });
         }
+        
+        // Reset glow effect
+        this.glowIntensity = 0;
+        this.glowColor.set(0x00ffff); // Reset to default cyan
+        this.updateGlowEffect(); // Apply the reset
     }
 }
