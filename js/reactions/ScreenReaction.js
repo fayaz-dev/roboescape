@@ -131,8 +131,8 @@ export class ScreenReaction extends ReactionBase {
         // Limit the number of messages by removing older ones if needed
         this.limitMessages();
         
-        // Also log to console for debugging and accessibility
-        console.log(`[${eventType}] ${message}`);
+        // Also log for debugging and accessibility
+        Debug.log(`[${eventType}] ${message}`);
     }
     
     limitMessages() {

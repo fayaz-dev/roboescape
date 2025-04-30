@@ -71,7 +71,7 @@ export class SoundManager {
             // Start playing background music after first interaction if enabled
             if (this.musicEnabled && this.backgroundMusic) {
                 this.backgroundMusic.play().catch(err => {
-                    console.warn('Failed to play background music', err);
+                    Debug.warn('Failed to play background music', err);
                 });
             }
         }, { once: true });
@@ -213,7 +213,7 @@ export class SoundManager {
         if (this.backgroundMusic) {
             if (this.musicEnabled) {
                 this.backgroundMusic.play().catch(err => {
-                    console.warn('Failed to play background music', err);
+                    Debug.warn('Failed to play background music', err);
                 });
             } else {
                 this.backgroundMusic.pause();
