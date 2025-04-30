@@ -1,4 +1,4 @@
-import ObjectPool from './ObjectPool.js';
+import { ObjectPool } from './ObjectPool.js';
 
 /**
  * A high-performance object pool specifically for plasma particles

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ExoticParticleFactory } from './particles/ExoticParticleFactory.js';
-import ObjectPool from './utils/ObjectPool.js';
+import { ObjectPool } from './utils/ObjectPool.js';
 
 export class ExoticParticles {
     constructor() {
@@ -121,6 +121,12 @@ export class ExoticParticles {
     }
     
     spawnShard() {
+        // Ensure sceneManager is available
+        if (!this.sceneManager) {
+            console.error("SceneManager not available for spawning shards");
+            return;
+        }
+        
         // Cache frequently accessed properties for better performance
         const centerX = this.sceneManager.centerX;
         const centerY = this.sceneManager.centerY;
@@ -161,8 +167,7 @@ export class ExoticParticles {
         };
         
         // Random number between 0 and 100 to determine particle type
-        // Using faster Math.random() * n | 0 integer truncation for performance
-        const roll = Math.random() * 100 | 0;
+        const roll = Math.random() * 100;
         let particleType;
         
         // Distribution: 60% normal, 25% unstable, 10% rare, 5% quantum
@@ -176,10 +181,17 @@ export class ExoticParticles {
             particleType = 'quantum';
         }
         
-        // Create shard using the factory with object pooling
-        const shard = this.particleFactory.createParticle(particleType, particleOptions);
-        
-        this.shards.push(shard);
+        try {
+            // Create shard using the factory with object pooling
+            const shard = this.particleFactory.createParticle(particleType, particleOptions);
+            if (shard) {
+                this.shards.push(shard);
+            } else {
+                console.error(`Failed to create ${particleType} particle`);
+            }
+        } catch (error) {
+            console.error(`Error spawning shard: ${error.message}`);
+        }
     }
     
     checkCollection(player) {
@@ -253,10 +265,13 @@ export class ExoticParticles {
         this.collectionEffects = [];
         this.spawnTimer = 0;
         this.frameCounter = 0;
-        this.collectionEffects = [];
         
-        // Spawn initial set of shards
-        for (let i = 0; i < Math.floor(this.shardCount / 2); i++) {
+        // Force immediate spawn of initial particles
+        const initialCount = Math.ceil(this.shardCount * 0.7); // Spawn 70% of max shards initially
+        console.log(`Spawning ${initialCount} initial shards`);
+        
+        // Spawn initial set of shards without throttling
+        for (let i = 0; i < initialCount; i++) {
             this.spawnShard();
         }
     }

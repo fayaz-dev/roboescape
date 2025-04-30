@@ -1,7 +1,7 @@
 /**
  * Performance optimization utilities for the game
  */
-export default class PerformanceOptimizer {
+export class PerformanceOptimizer {
     constructor() {
         // FPS tracking
         this.fps = 60;

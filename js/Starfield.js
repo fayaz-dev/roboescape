@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import ObjectPool from './utils/ObjectPool.js';
+import { ObjectPool } from './utils/ObjectPool.js';
 
 export class Starfield {
     constructor() {

@@ -1,7 +1,7 @@
 /**
  * Generic object pool to reuse objects and reduce garbage collection
  */
-export default class ObjectPool {
+export class ObjectPool {
     /**
      * Create a new object pool
      * @param {Function} factory - Factory function to create new objects

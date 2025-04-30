@@ -2,7 +2,7 @@ import { Reactions } from './reactions/Reactions.js';
 // Import the EndGameFeedback class from the current directory
 import { EndGameFeedback } from './EndGameFeedback.js';
 import uiManager from './UIManager.js';
-import PerformanceOptimizer from './utils/PerformanceOptimizer.js';
+import { PerformanceOptimizer } from './utils/PerformanceOptimizer.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
@@ -549,78 +549,79 @@ export class GameController {
     }
     
     gameLoop(currentTime) {
-        // Calculate accurate deltaTime with max value clamping to prevent huge jumps
-        let deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1); // Cap at 100ms
-        this.lastTime = currentTime;
-        
-        // Update performance metrics
-        this.performanceOptimizer.measureFrameRate(currentTime);
-        
-        // Skip frame if browser tab is inactive (deltaTime too large)
-        if (deltaTime > 0.05 && !document.hasFocus()) {
-            this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
-            return;
-        }
-        
-        // Update universe rotation
-        this.sceneManager.updateUniverseRotation(deltaTime);
-        
-        // Clear the canvas
-        this.sceneManager.clear();
-        
-        // Always update starfield and black hole for visual effect
-        // Use quality-based rendering for starfield
-        if (this.performanceOptimizer.shouldRender('starfield', {
-            high: 0,      // Every frame on high quality
-            medium: 0,    // Every frame on medium quality
-            low: 16       // Every other frame on low quality (approximately 60fps -> 30fps)
-        })) {
-            this.starfield.update(deltaTime);
-        }
-        
-        if (this.gameActive && !this.gameOver) {
-            // Active gameplay
-            // Update game time
-            this.gameTime += deltaTime;
+        try {
+            // Calculate accurate deltaTime with max value clamping to prevent huge jumps
+            let deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1); // Cap at 100ms
+            this.lastTime = currentTime;
             
-            // Sync blackHole's game time with our game time for difficulty scaling
-            this.blackHole.gameTime = this.gameTime;
+            // Update performance metrics
+            this.performanceOptimizer.measureFrameRate(currentTime);
             
-            this.blackHole.update(deltaTime, this.player); // Pass player to blackHole
-            
-            // Pass the blackHole to the player update method
-            this.player.update(deltaTime, this.blackHole);
-            
-            // Update particles - quality based rendering
-            if (this.performanceOptimizer.shouldRender('exotic_particles', {
-                high: 0,     // Every frame on high quality
-                medium: 16,  // Every other frame on medium quality
-                low: 33      // Every third frame on low quality
-            })) {
-                this.dataShards.update(deltaTime, this.player);
+            // Skip frame if browser tab is inactive (deltaTime too large)
+            if (deltaTime > 0.05 && !document.hasFocus()) {
+                this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+                return;
             }
             
-            // Check for collisions - this must run every frame for gameplay
-            this.checkCollisions();
+            // Update universe rotation
+            this.sceneManager.updateUniverseRotation(deltaTime);
+        
+            // Clear the canvas
+            this.sceneManager.clear();
             
-            // Draw score
-            this.drawScore();
-        } else if (this.gameOver) {
-            // Game over state
-            this.blackHole.update(deltaTime, null); // No player when game over
-            this.drawGameOver();
-        } else {
-            // Background animation only (before game starts)
-            this.blackHole.update(deltaTime, null);
-        }
-        
-        // Optional performance debug overlay
-        if (this.settings && this.settings.debugMode) {
-            this.drawPerformanceDebug();
-        }
-        
-        // Continue the game loop using the callback pattern for better performance
-        if (window.requestAnimationFrame) {
+            // Always update starfield and black hole for visual effect
+            // Use quality-based rendering for starfield
+            if (this.performanceOptimizer.shouldRender('starfield', {
+                high: 0,      // Every frame on high quality
+                medium: 0,    // Every frame on medium quality
+                low: 16       // Every other frame on low quality (approximately 60fps -> 30fps)
+            })) {
+                this.starfield.update(deltaTime);
+            }
+            
+            if (this.gameActive && !this.gameOver) {
+                // Active gameplay
+                // Update game time
+                this.gameTime += deltaTime;
+                
+                // Sync blackHole's game time with our game time for difficulty scaling
+                this.blackHole.gameTime = this.gameTime;
+                
+                this.blackHole.update(deltaTime, this.player); // Pass player to blackHole
+                
+                // Pass the blackHole to the player update method
+                this.player.update(deltaTime, this.blackHole);
+                
+                // Always update the exotic particles to ensure they're visible
+                // The performance optimization inside the update method is enough
+                this.dataShards.update(deltaTime, this.player);
+                
+                // Check for collisions - this must run every frame for gameplay
+                this.checkCollisions();
+                
+                // Draw score
+                this.drawScore();
+            } else if (this.gameOver) {
+                // Game over state
+                this.blackHole.update(deltaTime, null); // No player when game over
+                this.drawGameOver();
+            } else {
+                // Background animation only (before game starts)
+                this.blackHole.update(deltaTime, null);
+            }
+            
+            // Optional performance debug overlay
+            if (this.settings && this.settings.debugMode) {
+                this.drawPerformanceDebug();
+            }
+            
+            // Continue the game loop using the callback pattern for better performance
+            if (window.requestAnimationFrame) {
+                this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+            }
+        } catch (error) {
+            console.error("Error in game loop:", error);
+            // Continue the game loop even after an error to prevent the game from freezing
             this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
         }
     }

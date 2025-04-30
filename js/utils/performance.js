@@ -2,8 +2,8 @@
  * Performance optimization manager for RoboEscape game
  * Centralizes performance optimization configurations and utilities
  */
-import PerformanceOptimizer from './PerformanceOptimizer.js';
-import ObjectPool from './ObjectPool.js';
+import { PerformanceOptimizer } from './PerformanceOptimizer.js';
+import { ObjectPool } from './ObjectPool.js';
 
 // Create and export a single instance of the performance optimizer
 export const performanceOptimizer = new PerformanceOptimizer();
@@ -64,12 +64,11 @@ export function initPerformanceOptimizations(options = {}) {
         options.adaptiveQuality !== undefined ? options.adaptiveQuality : true;
     
     // Set initial quality level based on device capabilities
-    if (window.navigator.hardwareConcurrency <= 2) {
-        performanceOptimizer.qualityLevel = 'low';
-    } else if (window.navigator.hardwareConcurrency <= 4) {
-        performanceOptimizer.qualityLevel = 'medium';
+    // Use a more cautious approach - start with higher quality and let the adaptive system adjust
+    if (!window.navigator.hardwareConcurrency || window.navigator.hardwareConcurrency <= 2) {
+        performanceOptimizer.qualityLevel = 'medium'; // Start with medium even on low-end devices
     } else {
-        performanceOptimizer.qualityLevel = 'high';
+        performanceOptimizer.qualityLevel = 'high';   // Start with high on better devices
     }
     
     // Setup periodic pool cleanup
