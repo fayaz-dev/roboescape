@@ -212,6 +212,7 @@ export class ExoticParticles {
             
             // If player collects a shard
             if (distanceSquared < collectionRadiusSquared) {
+                // Add the actual value of the shard to collected points
                 collectedPoints += shard.value;
                 // Create collection effect
                 this.createCollectionEffect(shard.x, shard.y, shard.value);

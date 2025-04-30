@@ -260,9 +260,9 @@ export class Player {
         
         // Add indicator lights to panel - use emissive materials
         const lightGeometry = new THREE.CircleGeometry(0.05, 16); // Smoother circles
-        const greenLightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 1 });
-        const redLightMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1 });
-        const blueLightMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, emissive: 0x0000ff, emissiveIntensity: 1 });
+        const greenLightMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 1 });
+        const redLightMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1 });
+        const blueLightMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x0000ff, emissiveIntensity: 1 });
         
         const light1 = new THREE.Mesh(lightGeometry, greenLightMaterial);
         light1.position.set(0.1, 0.45, 0.22); // Slightly forward

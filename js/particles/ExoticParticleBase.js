@@ -23,7 +23,7 @@ export class ExoticParticleBase {
         this.radius = options.radius || 8;
         this.rotation = options.rotation || Math.random() * Math.PI * 2;
         this.rotationSpeed = Math.random() * 0.5 + 0.2; // Random rotation speed
-        this.value = 1; // Default value, to be overridden by subclasses
+        this.value = options.value || 1; // Default value, to be overridden by subclasses
         this.color = '#00ffff'; // Default color, can be overridden
         this.active = true; // Flag for object pooling
         this.pulsePhase = Math.random() * Math.PI * 2; // Random pulse phase for animation

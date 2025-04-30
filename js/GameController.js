@@ -136,8 +136,9 @@ export class GameController {
         // Check for exotic particle collection
         const collectedShards = this.dataShards.checkCollection(this.player);
         if (collectedShards > 0) {
+            // collectedShards represents the actual value of the collected particle
             this.score += collectedShards;
-            this.player.dataShards += 1; // Add 1 shard for each collection
+            this.player.dataShards += 1; // Add 1 to exotic particle count regardless of value
             // Trigger reaction
             this.reactions.onShardCollected(collectedShards);
         }
