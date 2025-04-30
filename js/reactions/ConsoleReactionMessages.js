@@ -11,7 +11,7 @@ export class ConsoleReactionMessages {
                 "The void beckons... Robonaut's sensors are ready for data collection! 🚀",
                 "Robonaut activated! Let's collect particles to save our planet! 🚀"
             ],
-            shardCollected: [
+            particleCollected: [
                 "Exotic Particle collected—valuable data for Earth's scientists! 🚀",
                 "Another Exotic Particle analyzed; critical research data incoming! 🚀",
                 "Particle sample collected—one step closer to understanding the threat! 🚀",

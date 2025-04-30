@@ -18,12 +18,12 @@ export class Player {
             right: false
         };
         
-        // Modified shard mechanics
-        this.dataShards = 1; // Start with 1 shard
+        // Modified particle mechanics
+        this.particles = 1; // Start with 1 particle
         this.blackHoleTimer = 0;
         this.isTrapped = false;
-        this.lastShardLossTime = 0;
-        this.shardLossInterval = 2; // 2 seconds between shard loss
+        this.lastParticleLossTime = 0;
+        this.particleLossInterval = 2; // 2 seconds between particle loss
         this.lastMovementTime = Date.now(); // Track last movement time
         this.escapeBoostActive = false;
         this.escapeBoostDuration = 0;
@@ -555,15 +555,15 @@ export class Player {
                     this.lastMovementTime = Date.now();
                 }
 
-                // Check for shard loss
+                // Check for particle loss
                 const currentTime = Date.now();
                 if (this.blackHoleTimer >= 5 && 
-                    currentTime - this.lastShardLossTime >= this.shardLossInterval * 1000) {
-                    this.dataShards = Math.max(0, this.dataShards - 1);
-                    this.lastShardLossTime = currentTime;
+                    currentTime - this.lastParticleLossTime >= this.particleLossInterval * 1000) {
+                    this.particles = Math.max(0, this.particles - 1);
+                    this.lastParticleLossTime = currentTime;
                     
-                    // Trigger game over if no shards left
-                    if (this.dataShards <= 0) {
+                    // Trigger game over if no particles left
+                    if (this.particles <= 0) {
                         window.dispatchEvent(new CustomEvent('playerDestroyed'));
                         // Pull player towards black hole center
                         const pullAngle = Math.atan2(dy, dx);
@@ -970,9 +970,9 @@ export class Player {
     }
     
     tryEscape() {
-        if (this.isTrapped && this.dataShards >= 5) {
+        if (this.isTrapped && this.particles >= 5) {
             // Subtract 5 exotic particles when escaping
-            this.dataShards -= 5;
+            this.particles -= 5;
             this.isTrapped = false;
             this.escapeBoostActive = true;
             this.escapeBoostDuration = 1.0; // 1 second boost
@@ -1149,10 +1149,10 @@ export class Player {
         };
         
         // Reset exotic particle properties
-        this.dataShards = 1;
+        this.particles = 1;
         this.blackHoleTimer = 0;
         this.isTrapped = false;
-        this.lastShardLossTime = 0;
+        this.lastParticleLossTime = 0;
         
         // Reset the drag to default value
         this.drag = this.defaultDrag;

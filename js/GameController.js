@@ -5,12 +5,12 @@ import uiManager from './UIManager.js';
 import { PerformanceOptimizer } from './utils/PerformanceOptimizer.js';
 
 export class GameController {
-    constructor({ sceneManager, player, blackHole, starfield, dataShards, settings, onGameOver }) {
+    constructor({ sceneManager, player, blackHole, starfield, particles, settings, onGameOver }) {
         this.sceneManager = sceneManager;
         this.player = player;
         this.blackHole = blackHole;
         this.starfield = starfield;
-        this.dataShards = dataShards;
+        this.particles = particles;
         this.settings = settings;
         this.lastTime = 0;
         this.gameOver = false;
@@ -79,7 +79,7 @@ export class GameController {
         this.player.init(this.sceneManager);
         this.blackHole.init(this.sceneManager);
         this.starfield.init(this.sceneManager);
-        this.dataShards.init(this.sceneManager);
+        this.particles.init(this.sceneManager);
         
         // Setup event listeners
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
@@ -134,17 +134,17 @@ export class GameController {
         }
         
         // Check for exotic particle collection
-        const collectedShards = this.dataShards.checkCollection(this.player);
-        if (collectedShards > 0) {
-            // collectedShards represents the actual value of the collected particle
-            this.score += collectedShards;
-            this.player.dataShards += 1; // Add 1 to exotic particle count regardless of value
+        const collectedParticles = this.particles.checkCollection(this.player);
+        if (collectedParticles > 0) {
+            // collectedParticles represents the actual value of the collected particle
+            this.score += collectedParticles;
+            this.player.particles += 1; // Add 1 to exotic particle count regardless of value
             // Trigger reaction
-            this.reactions.onShardCollected(collectedShards);
+            this.reactions.onParticleCollected(collectedParticles);
         }
 
-        // Check if player has lost all shards and is in event horizon
-        if (this.player.dataShards <= 0 && this.player.isTrapped) {
+        // Check if player has lost all particles and is in event horizon
+        if (this.player.particles <= 0 && this.player.isTrapped) {
             if (!this.gameOver) {
                 this.createExplosion(this.player.x, this.player.y);
                 this.gameOverEffects.shake = 1.0;
@@ -170,8 +170,8 @@ export class GameController {
         ctx.fillText(`Time: ${timeString}`, 20, 70);
         
         // Draw exotic particle count with color coding
-        ctx.fillStyle = this.player.dataShards < 0 ? '#ff3333' : '#00ffff';
-        ctx.fillText(`Exotic Particles: ${this.player.dataShards}`, 20, 100);
+        ctx.fillStyle = this.player.particles < 0 ? '#ff3333' : '#00ffff';
+        ctx.fillText(`Exotic Particles: ${this.player.particles}`, 20, 100);
         
         // Show speed boost indicator when active
         if (this.player.speedBoostActive) {
@@ -184,8 +184,8 @@ export class GameController {
             ctx.fillStyle = '#ff3333';
             ctx.textAlign = 'center';
             
-            if (this.player.dataShards >= 5) {
-                ctx.fillText('Press SPACEBAR to escape! (-5 shards)', 
+            if (this.player.particles >= 5) {
+                ctx.fillText('Press SPACEBAR to escape! (-5 particles)', 
                     this.sceneManager.centerX, 60);
             } else {
                 const timeSinceLastMove = (Date.now() - this.player.lastMovementTime) / 1000;
@@ -268,7 +268,7 @@ export class GameController {
                 // Small delay to allow the final explosion animation to finish
                 setTimeout(() => {
                     // Show the feedback panel with the player's performance
-                    this.endGameFeedback.showFeedback(this.score, this.gameTime, this.player.dataShards);
+                    this.endGameFeedback.showFeedback(this.score, this.gameTime, this.player.particles);
                     
                     // Call the original callback as well
                     callback(this.score, this.gameTime);
@@ -319,13 +319,13 @@ export class GameController {
         if (this.player) {
             console.log("Resetting player...");
             this.player.reset();
-            this.player.dataShards = 1; // Restart with 1 exotic particle
+            this.player.particles = 1; // Restart with 1 exotic particle
         }
         
         // Reset exotic particles system
-        if (this.dataShards) {
+        if (this.particles) {
             console.log("Resetting exotic particles...");
-            this.dataShards.reset();
+            this.particles.reset();
         }
         
         // Reset blackhole using its dedicated reset method
@@ -408,7 +408,7 @@ export class GameController {
         this.player.update(deltaTime, this.blackHole);
         this.blackHole.update(deltaTime);
         this.starfield.update(deltaTime);
-        this.dataShards.update(deltaTime);
+        this.particles.update(deltaTime);
         
         // Check for collisions
         this.checkCollisions();
@@ -460,9 +460,9 @@ export class GameController {
             this.score = 0;
             this.gameTime = 0;
             this.player.reset();
-            this.dataShards.reset();
+            this.particles.reset();
             this.blackHole.reset();
-            this.player.dataShards = 1;
+            this.player.particles = 1;
             
             // Display start message and play start sound
             this.reactions.onGameStart();
@@ -614,7 +614,7 @@ export class GameController {
             this.lastTime = currentTime;
             
             // Check if core game components are available
-            if (!this.sceneManager || !this.player || !this.blackHole || !this.dataShards) {
+            if (!this.sceneManager || !this.player || !this.blackHole || !this.particles) {
                 console.error("Critical game components missing in game loop");
                 // Try to continue anyway
                 this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
@@ -661,7 +661,7 @@ export class GameController {
                 
                 // Always update the exotic particles to ensure they're visible
                 // The performance optimization inside the update method is enough
-                this.dataShards.update(deltaTime, this.player);
+                this.particles.update(deltaTime, this.player);
                 
                 // Check for collisions - this must run every frame for gameplay
                 this.checkCollisions();

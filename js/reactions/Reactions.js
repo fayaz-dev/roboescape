@@ -30,8 +30,8 @@ export class Reactions {
     }
     
     // Helper methods for common events
-    onShardCollected(count) {
-        this.processEvent('shardCollected', { count });
+    onParticleCollected(count) {
+        this.processEvent('particleCollected', { count });
         
         // Play particle collection sound based on value/rarity
         // This will be triggered by the particleCollected event in SoundManager

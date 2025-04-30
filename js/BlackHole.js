@@ -385,8 +385,8 @@ export class BlackHole {
         ctx.beginPath();
         ctx.ellipse(this.x, this.y, this.radius * 1.8, this.radius * 0.5, 
                    this.angle + this.rotationOffset, 0, Math.PI * 2);
-        if (this.consumedShardEffects.length > 0) {
-            ctx.strokeStyle = 'rgba(255, 100, 100, 0.7)'; // Redder when consuming shards
+        if (this.consumedParticleEffects.length > 0) {
+            ctx.strokeStyle = 'rgba(255, 100, 100, 0.7)'; // Redder when consuming particles
         } else {
             ctx.strokeStyle = 'rgba(255, 100, 255, 0.7)';
         }
@@ -395,9 +395,9 @@ export class BlackHole {
         ctx.closePath();
     }
 
-    // Add method to show shard consumption effect
-    addShardConsumptionEffect() {
-        this.consumedShardEffects.push({
+    // Add method to show particle consumption effect
+    addParticleConsumptionEffect() {
+        this.consumedParticleEffects.push({
             life: 1.0,
             maxLife: 1.0
         });

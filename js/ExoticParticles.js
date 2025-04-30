@@ -4,12 +4,12 @@ import { ObjectPool } from './utils/ObjectPool.js';
 
 export class ExoticParticles {
     constructor() {
-        this.shards = [];
-        this.shardCount = 20;
+        this.particles = [];
+        this.particleCount = 20;
         this.collectionRadius = 25;
         this.spawnTimer = 0;
         this.spawnInterval = 3; // seconds
-        this.collectionEffects = []; // Store visual effects for shard collection
+        this.collectionEffects = []; // Store visual effects for particle collection
         this.particleFactory = new ExoticParticleFactory();
         
         // Object pool for collection effects
@@ -50,16 +50,16 @@ export class ExoticParticles {
         if (this.frameCounter % this.frameUpdateInterval === 0) {
             // Spawn new shards periodically (throttled)
             this.spawnTimer += deltaTime * this.frameUpdateInterval;
-            if (this.spawnTimer >= this.spawnInterval && this.shards.length < this.shardCount) {
-                this.spawnShard();
+            if (this.spawnTimer >= this.spawnInterval && this.particles.length < this.particleCount) {
+                this.spawnParticle();
                 this.spawnTimer = 0;
             }
         }
         
         // Update and draw shards
-        for (let i = 0; i < this.shards.length; i++) {
-            const shard = this.shards[i];
-            if (!shard.active) continue; // Skip inactive shards
+        for (let i = 0; i < this.particles.length; i++) {
+            const particle = this.particles[i];
+            if (!particle.active) continue; // Skip inactive particles
             
             // Apply universe rotation to each shard
             const relX = shard.x - centerX;
@@ -70,14 +70,14 @@ export class ExoticParticles {
             const rotationVelocityY = relX * rotationSpeed;
             
             // Apply rotation to shard position
-            shard.x += rotationVelocityX * 60 * deltaTime;
-            shard.y += rotationVelocityY * 60 * deltaTime;
+            particle.x += rotationVelocityX * 60 * deltaTime;
+            particle.y += rotationVelocityY * 60 * deltaTime;
             
             // Update particle's internal state
-            shard.update(deltaTime);
+            particle.update(deltaTime);
             
-            // Draw shard - delegate to the particle's draw method
-            shard.draw(ctx);
+            // Draw particle - delegate to the particle's draw method
+            particle.draw(ctx);
         }
         
         // Update and draw collection effects
@@ -120,10 +120,10 @@ export class ExoticParticles {
         }
     }
     
-    spawnShard() {
+    spawnParticle() {
         // Ensure sceneManager is available
         if (!this.sceneManager) {
-            console.error("SceneManager not available for spawning shards");
+            console.error("SceneManager not available for spawning particles");
             return;
         }
         
@@ -182,10 +182,10 @@ export class ExoticParticles {
         }
         
         try {
-            // Create shard using the factory with object pooling
-            const shard = this.particleFactory.createParticle(particleType, particleOptions);
-            if (shard) {
-                this.shards.push(shard);
+            // Create particle using the factory with object pooling
+            const particle = this.particleFactory.createParticle(particleType, particleOptions);
+            if (particle) {
+                this.particles.push(particle);
             } else {
                 console.error(`Failed to create ${particleType} particle`);
             }
@@ -202,24 +202,24 @@ export class ExoticParticles {
         const collectionRadiusSquared = this.collectionRadius * this.collectionRadius;
         
         // Using a for loop with indices instead of filter for better performance
-        for (let i = this.shards.length - 1; i >= 0; i--) {
-            const shard = this.shards[i];
-            const dx = player.x - shard.x;
-            const dy = player.y - shard.y;
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            const dx = player.x - particle.x;
+            const dy = player.y - particle.y;
             
             // Using distance squared to avoid costly square root operation
             const distanceSquared = dx * dx + dy * dy;
             
-            // If player collects a shard
+            // If player collects a particle
             if (distanceSquared < collectionRadiusSquared) {
-                // Add the actual value of the shard to collected points
-                collectedPoints += shard.value;
+                // Add the actual value of the particle to collected points
+                collectedPoints += particle.value;
                 // Create collection effect
-                this.createCollectionEffect(shard.x, shard.y, shard.value);
+                this.createCollectionEffect(particle.x, particle.y, particle.value);
                 
                 // Determine particle type based on constructor name or value
                 // Using a more direct check that avoids instanceof for better performance
-                const particleType = shard.constructor.name;
+                const particleType = particle.constructor.name;
                 if (particleType.includes('Quantum')) {
                     collectedType = 'quantum';
                 } else if (particleType.includes('Rare')) {
@@ -234,15 +234,15 @@ export class ExoticParticles {
                 window.dispatchEvent(new CustomEvent('particleCollected', { 
                     detail: { 
                         type: collectedType, 
-                        value: shard.value 
+                        value: particle.value 
                     } 
                 }));
                 
-                // Remove the shard
+                // Remove the particle
                 // Performance: Swap with the last element and pop
-                const lastShard = this.shards.pop();
-                if (i < this.shards.length) {
-                    this.shards[i] = lastShard;
+                const lastParticle = this.particles.pop();
+                if (i < this.particles.length) {
+                    this.particles[i] = lastParticle;
                 }
             }
         }
@@ -288,15 +288,15 @@ export class ExoticParticles {
         this.frameCounter = 0;
         
         // Force immediate spawn of initial particles
-        const initialCount = Math.ceil(this.shardCount * 0.7); // Spawn 70% of max shards initially
-        console.log(`Spawning ${initialCount} initial shards`);
+        const initialCount = Math.ceil(this.particleCount * 0.7); // Spawn 70% of max particles initially
+        console.log(`Spawning ${initialCount} initial particles`);
         
-        // Spawn initial set of shards without throttling
+        // Spawn initial set of particles without throttling
         try {
             for (let i = 0; i < initialCount; i++) {
-                this.spawnShard();
+                this.spawnParticle();
             }
-            console.log(`Successfully spawned ${this.shards.length} shards`);
+            console.log(`Successfully spawned ${this.particles.length} particles`);
         } catch (error) {
             console.error("Error spawning initial shards:", error);
         }
