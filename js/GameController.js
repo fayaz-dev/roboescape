@@ -314,12 +314,24 @@ export class GameController {
             redFlash: 0
         };
         
-        this.player.reset();
-        this.dataShards.reset();
-        this.player.dataShards = 1; // Restart with 1 exotic particle
+        // Reset player first
+        if (this.player) {
+            console.log("Resetting player...");
+            this.player.reset();
+            this.player.dataShards = 1; // Restart with 1 exotic particle
+        }
+        
+        // Reset exotic particles system
+        if (this.dataShards) {
+            console.log("Resetting exotic particles...");
+            this.dataShards.reset();
+        }
         
         // Reset blackhole using its dedicated reset method
-        this.blackHole.reset();
+        if (this.blackHole) {
+            console.log("Resetting black hole...");
+            this.blackHole.reset();
+        }
         
         // Clear any existing screen messages
         if (this.reactions && this.reactions.reactions.screen) {
@@ -333,17 +345,12 @@ export class GameController {
         if (settingsPanel) settingsPanel.style.display = 'none';
         
         // Trigger the game start reaction (which will play sound too)
-        this.reactions.onGameStart();
+        if (this.reactions) {
+            this.reactions.onGameStart();
+        }
         
         // Play intro animation when restarting
         this.playIntroAnimation();
-        
-        // Make sure game start message appears when restarting
-        if (this.settings.reactionsEnabled) {
-            setTimeout(() => {
-                this.reactions.onGameStart();
-            }, 100);
-        }
         
         // Set up the callback again
         this.onGameOver = function(score, time) {
@@ -354,6 +361,18 @@ export class GameController {
                 console.log('Game over with score:', score, 'time:', time);
             }
         };
+        
+        // Most importantly, restart the game loop
+        this.start();
+        
+        // Make sure game start message appears when restarting
+        if (this.settings && this.settings.reactionsEnabled) {
+            setTimeout(() => {
+                if (this.reactions) {
+                    this.reactions.onGameStart();
+                }
+            }, 100);
+        }
     }
     
     update(time) {

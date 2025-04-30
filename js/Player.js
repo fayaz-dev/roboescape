@@ -1133,6 +1133,8 @@ export class Player {
     }
     
     reset() {
+        console.log("Player reset called");
+        
         // Position the robot on the far left side of the screen with a small padding
         const leftPadding = 50; // Small padding from the left edge
         this.x = leftPadding + this.radius; // Add radius to ensure robot is fully visible
@@ -1145,20 +1147,16 @@ export class Player {
             left: false,
             right: false
         };
+        
         // Reset exotic particle properties
         this.dataShards = 1;
         this.blackHoleTimer = 0;
         this.isTrapped = false;
         this.lastShardLossTime = 0;
         
-        // Reset glow effect properties
-        this.glowIntensity = 0;
-        this.glowColor.set(0x00ffff); // Reset to default cyan
-        this.lastParticleValue = 1;
-        this.updateGlowEffect(); // Apply the reset
-        
         // Reset the drag to default value
         this.drag = this.defaultDrag;
+        
         // Reset escape boost flags
         this.escapeBoostActive = false;
         this.escapeBoostDuration = 0;
@@ -1173,6 +1171,10 @@ export class Player {
         // Reset movement direction tracking
         this.lastMovementAngle = 0;
         
+        // Reset rendering timestamp to force a redraw
+        this.lastRenderTime = 0;
+        
+        // Reset Three.js components
         if (this.robot) {
             // Reset all rotations
             this.robot.rotation.set(0, 0, 0);
@@ -1180,6 +1182,16 @@ export class Player {
             this.robot.quaternion.set(0, 0, 0, 1);
             // Reset scale to prevent any lingering distortion effects
             this.robot.scale.set(1, 1, 1);
+            
+            // Ensure the robot is visible
+            this.robot.visible = true;
+        } else {
+            console.warn("Robot model was not found during reset");
+            // Try to recreate the 3D model if needed
+            if (this.sceneManager && !this.robot) {
+                console.log("Recreating 3D robot model");
+                this.setup3DModel();
+            }
         }
         
         // Reset jetpack flames
@@ -1199,6 +1211,14 @@ export class Player {
         // Reset glow effect
         this.glowIntensity = 0;
         this.glowColor.set(0x00ffff); // Reset to default cyan
+        
+        // Apply reset to glow effect
+        this.updateGlowEffect();
+        
+        // Force a renderer update
+        if (this.renderer) {
+            this.renderer.render(this.scene, this.camera);
+        }
         this.updateGlowEffect(); // Apply the reset
     }
 }
