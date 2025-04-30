@@ -1,7 +1,7 @@
 export class ConsoleReactionStyles {
     constructor() {
         this.styles = {
-            shardCollected: [
+            particleCollected: [
                 "color: #FF5733; font-weight: bold", 
                 "color: #C70039; background: #FDFEFE",
                 "color: #FFD700; font-size: 15px; text-shadow: 2px 2px #FF4500",

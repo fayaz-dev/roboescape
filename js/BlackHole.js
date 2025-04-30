@@ -26,8 +26,8 @@ export class BlackHole {
         // Game time tracking for difficulty scaling
         this.gameTime = 0;
 
-        // New properties for shard consumption effects
-        this.consumedShardEffects = [];
+        // New properties for particle consumption effects
+        this.consumedParticleEffects = [];
         this.warningPulse = 0;
         
         // New properties for pulsating mystical effect
@@ -44,7 +44,7 @@ export class BlackHole {
         this.movementRange = 0.2; // Move up to 20% of screen size
         
         this.effectMaxLife = 2.0;
-        this.consumedShardEffects.push({ life: this.effectMaxLife, maxLife: this.effectMaxLife });
+        this.consumedParticleEffects.push({ life: this.effectMaxLife, maxLife: this.effectMaxLife });
         
         // Universe rotation properties
         this.rotationOffset = 0; // Additional rotation caused by universe rotation
@@ -272,13 +272,13 @@ export class BlackHole {
         ctx.fill();
         ctx.closePath();
         
-        // Draw consumed shard effects
-        for (let i = this.consumedShardEffects.length - 1; i >= 0; i--) {
-            const effect = this.consumedShardEffects[i];
+        // Draw consumed particle effects
+        for (let i = this.consumedParticleEffects.length - 1; i >= 0; i--) {
+            const effect = this.consumedParticleEffects[i];
             effect.life -= deltaTime;
             
             if (effect.life <= 0) {
-                this.consumedShardEffects.splice(i, 1);
+                this.consumedParticleEffects.splice(i, 1);
                 continue;
             }
             
@@ -356,13 +356,13 @@ export class BlackHole {
             ctx.fill();
         }
         
-        // Draw event horizon indicator with enhanced effects when consuming shards
+        // Draw event horizon indicator with enhanced effects when consuming particles
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.eventHorizonRadius, 0, Math.PI * 2);
         const pulseIntensity = (Math.sin(this.eventHorizonPulse) + 1) * 0.5;
         
-        // Increase red component when consuming shards
-        if (this.consumedShardEffects.length > 0) {
+        // Increase red component when consuming particles
+        if (this.consumedParticleEffects.length > 0) {
             this.warningPulse = (this.warningPulse + deltaTime * 10) % (Math.PI * 2);
             const warningIntensity = (Math.sin(this.warningPulse) + 1) * 0.5;
             ctx.strokeStyle = `rgba(255, ${Math.floor(warningIntensity * 100)}, ${Math.floor(warningIntensity * 255)}, ${0.3 + pulseIntensity * 0.2})`;
@@ -426,7 +426,7 @@ export class BlackHole {
         this.gameTime = 0;
         
         // Reset visual effects
-        this.consumedShardEffects = [];
+        this.consumedParticleEffects = [];
         this.warningPulse = 0;
         
         // Reset rotation and pulsing
@@ -460,9 +460,9 @@ export class BlackHole {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // If an exotic particle was just consumed, create visual effect
-        if (object.lastShardLossTime && 
-            Date.now() - object.lastShardLossTime < 100) {
-            this.addShardConsumptionEffect();
+        if (object.lastParticleLossTime && 
+            Date.now() - object.lastParticleLossTime < 100) {
+            this.addParticleConsumptionEffect();
         }
         
         if (distance > 0) {

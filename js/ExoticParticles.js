@@ -48,7 +48,7 @@ export class ExoticParticles {
         
         // Throttled operations - only every X frames
         if (this.frameCounter % this.frameUpdateInterval === 0) {
-            // Spawn new shards periodically (throttled)
+            // Spawn new particles periodically (throttled)
             this.spawnTimer += deltaTime * this.frameUpdateInterval;
             if (this.spawnTimer >= this.spawnInterval && this.particles.length < this.particleCount) {
                 this.spawnParticle();
@@ -56,20 +56,20 @@ export class ExoticParticles {
             }
         }
         
-        // Update and draw shards
+        // Update and draw particles
         for (let i = 0; i < this.particles.length; i++) {
             const particle = this.particles[i];
             if (!particle.active) continue; // Skip inactive particles
             
-            // Apply universe rotation to each shard
-            const relX = shard.x - centerX;
-            const relY = shard.y - centerY;
+            // Apply universe rotation to each particle
+            const relX = particle.x - centerX;
+            const relY = particle.y - centerY;
             
             // Calculate rotation-induced velocity (pre-calculated for performance)
             const rotationVelocityX = -relY * rotationSpeed;
             const rotationVelocityY = relX * rotationSpeed;
             
-            // Apply rotation to shard position
+            // Apply rotation to particle position
             particle.x += rotationVelocityX * 60 * deltaTime;
             particle.y += rotationVelocityY * 60 * deltaTime;
             
@@ -134,8 +134,8 @@ export class ExoticParticles {
         const height = this.sceneManager.height;
         const margin = 100;
         
-        // Fast path: check if we have too many shards, only relevant for very CPU intensive moments
-        if (this.shards.length > this.shardCount * 1.5) {
+        // Fast path: check if we have too many particles, only relevant for very CPU intensive moments
+        if (this.particles.length > this.particleCount * 1.5) {
             return;
         }
         
@@ -190,7 +190,7 @@ export class ExoticParticles {
                 console.error(`Failed to create ${particleType} particle`);
             }
         } catch (error) {
-            console.error(`Error spawning shard: ${error.message}`);
+            console.error(`Error spawning particle: ${error.message}`);
         }
     }
     
@@ -272,17 +272,17 @@ export class ExoticParticles {
         
         // Return active particles to pool if using pooling
         if (this.particleFactory) {
-            for (let i = 0; i < this.shards.length; i++) {
-                const shard = this.shards[i];
-                if (shard) {
+            for (let i = 0; i < this.particles.length; i++) {
+                const particle = this.particles[i];
+                if (particle) {
                     // Mark as inactive but don't worry about returning to pool yet
                     // The factory will handle this when creating new particles
-                    shard.active = false;
+                    particle.active = false;
                 }
             }
         }
         
-        this.shards = [];
+        this.particles = [];
         this.collectionEffects = [];
         this.spawnTimer = 0;
         this.frameCounter = 0;
@@ -298,7 +298,7 @@ export class ExoticParticles {
             }
             console.log(`Successfully spawned ${this.particles.length} particles`);
         } catch (error) {
-            console.error("Error spawning initial shards:", error);
+            console.error("Error spawning initial particles:", error);
         }
     }
 }

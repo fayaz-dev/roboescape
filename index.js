@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const player = new Player();
         const blackHole = new BlackHole();
         const starfield = new Starfield();
-        const dataShards = new ExoticParticles();
+        const particles = new ExoticParticles();
         const settings = new Settings();
         
         // Create game controller and pass all components
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             player,
             blackHole,
             starfield, 
-            dataShards,
+            particles,
             settings,
             onGameOver: handleGameOver
         });
