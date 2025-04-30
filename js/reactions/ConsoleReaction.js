@@ -16,6 +16,6 @@ export class ConsoleReaction extends ReactionBase {
             message += ` | Context: ${data}`;
         }
         const style = this.styles.getRandomStyle(eventType);
-        console.log(`%c[${eventType}] ${message}`, style);
+        Debug.log(`%c[${eventType}] ${message}`, style);
     }
 }
