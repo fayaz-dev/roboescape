@@ -9,9 +9,13 @@ import { HomeBackground } from './js/HomeBackground.js';
 import uiManager from './js/UIManager.js';
 import soundManager from './js/SoundManager.js';
 import { initPerformanceOptimizations } from './js/utils/performance.js';
+import Debug from './js/utils/Debug.js';
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Debug module
+    Debug.initialize();
+    
     // Initialize performance optimizations first
     const performanceOptions = {
         adaptiveQuality: true,

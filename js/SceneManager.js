@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import Debug from './utils/Debug.js';
 
 export class SceneManager {
     constructor() {
@@ -46,10 +47,10 @@ export class SceneManager {
     clear() {
         // Ensure canvas context is valid
         if (!this.ctx) {
-            console.error("Canvas context is null in SceneManager.clear()");
+            Debug.error("Canvas context is null in SceneManager.clear()");
             this.ctx = this.canvas.getContext('2d');
             if (!this.ctx) {
-                console.error("Failed to recreate canvas context");
+                Debug.error("Failed to recreate canvas context");
                 return;
             }
         }

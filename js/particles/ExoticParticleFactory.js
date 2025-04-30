@@ -3,6 +3,7 @@ import { RareExoticParticle } from './RareExoticParticle.js';
 import { UnstableExoticParticle } from './UnstableExoticParticle.js';
 import { QuantumExoticParticle } from './QuantumExoticParticle.js';
 import { ObjectPool } from '../utils/ObjectPool.js';
+import Debug from '../utils/Debug.js';
 
 /**
  * Factory for creating different types of exotic particles
@@ -54,7 +55,7 @@ export class ExoticParticleFactory {
             
             // Ensure position is set
             if (options.x === undefined || options.y === undefined) {
-                console.warn(`Creating particle without position, using default`);
+                Debug.warn(`Creating particle without position, using default`);
                 options.x = options.x || 0;
                 options.y = options.y || 0;
             }
@@ -72,13 +73,13 @@ export class ExoticParticleFactory {
             const ParticleClass = this.particleTypes[type];
             
             if (!ParticleClass) {
-                console.warn(`Unknown particle type: ${type}, falling back to normal`);
+                Debug.warn(`Unknown particle type: ${type}, falling back to normal`);
                 return this.particlePools['normal'].get(options);
             }
             
             return new ParticleClass(options);
         } catch (error) {
-            console.error(`Error in createParticle for type ${type}:`, error);
+            Debug.error(`Error in createParticle for type ${type}:`, error);
             // Last resort fallback - return a basic normal particle
             return new NormalExoticParticle({
                 x: options?.x || 0,

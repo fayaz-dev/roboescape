@@ -3,6 +3,7 @@ import { Reactions } from './reactions/Reactions.js';
 import { EndGameFeedback } from './EndGameFeedback.js';
 import uiManager from './UIManager.js';
 import { PerformanceOptimizer } from './utils/PerformanceOptimizer.js';
+import Debug from './utils/Debug.js';
 
 export class GameController {
     constructor({ sceneManager, player, blackHole, starfield, particles, settings, onGameOver }) {
@@ -317,20 +318,20 @@ export class GameController {
         
         // Reset player first
         if (this.player) {
-            console.log("Resetting player...");
+            Debug.log("Resetting player...");
             this.player.reset();
             this.player.particles = 1; // Restart with 1 exotic particle
         }
         
         // Reset exotic particles system
         if (this.particles) {
-            console.log("Resetting exotic particles...");
+            Debug.log("Resetting exotic particles...");
             this.particles.reset();
         }
         
         // Reset blackhole using its dedicated reset method
         if (this.blackHole) {
-            console.log("Resetting black hole...");
+            Debug.log("Resetting black hole...");
             this.blackHole.reset();
         }
         
@@ -359,7 +360,7 @@ export class GameController {
             if (typeof window.handleGameOver === 'function') {
                 window.handleGameOver(score, time);
             } else {
-                console.log('Game over with score:', score, 'time:', time);
+                Debug.log('Game over with score:', score, 'time:', time);
             }
         };
         
@@ -415,7 +416,7 @@ export class GameController {
     }
     
     start() {
-        console.log("GameController start called");
+        Debug.log("GameController start called");
         
         // Cancel any existing animation frame
         if (this.animationFrameId) {
@@ -433,7 +434,7 @@ export class GameController {
         
         // Start the game loop
         this.animationFrameId = requestAnimationFrame((timestamp) => {
-            console.log("Starting new game loop");
+            Debug.log("Starting new game loop");
             this.gameLoop(timestamp);
         });
     }
@@ -615,7 +616,7 @@ export class GameController {
             
             // Check if core game components are available
             if (!this.sceneManager || !this.player || !this.blackHole || !this.particles) {
-                console.error("Critical game components missing in game loop");
+                Debug.error("Critical game components missing in game loop");
                 // Try to continue anyway
                 this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
                 return;
@@ -687,7 +688,7 @@ export class GameController {
                 this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
             }
         } catch (error) {
-            console.error("Error in game loop:", error);
+            Debug.error("Error in game loop:", error);
             // Continue the game loop even after an error to prevent the game from freezing
             this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
         }

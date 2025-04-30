@@ -2,6 +2,8 @@
  * SoundManager - Handles all game audio using Web Audio API
  * Provides methods to play different sound effects and control global sound settings
  */
+import Debug from './utils/Debug.js';
+
 export class SoundManager {
     constructor() {
         // Create audio context
@@ -96,13 +98,13 @@ export class SoundManager {
                 try {
                     await this.audioContext.audioWorklet.addModule('./js/audio-processors/noise-processor.js');
                     this.audioWorkletInitialized = true;
-                    console.log('Audio worklet initialized successfully');
+                    Debug.log('Audio worklet initialized successfully');
                 } catch (err) {
-                    console.warn('Failed to initialize audio worklet, falling back to alternative methods', err);
+                    Debug.warn('Failed to initialize audio worklet, falling back to alternative methods', err);
                     this.audioWorkletInitialized = false;
                 }
             } else {
-                console.warn('AudioWorklet not supported in this browser, falling back to alternative methods');
+                Debug.warn('AudioWorklet not supported in this browser, falling back to alternative methods');
                 this.audioWorkletInitialized = false;
             }
             
@@ -110,18 +112,18 @@ export class SoundManager {
             this.createSounds();
             
             // Log success
-            console.log('Audio context initialized successfully');
+            Debug.log('Audio context initialized successfully');
             
             // Resume audio context if it's suspended and sound is enabled
             if (this.audioContext.state === 'suspended' && this.soundEnabled) {
                 this.audioContext.resume().then(() => {
-                    console.log('Audio context resumed successfully');
+                    Debug.log('Audio context resumed successfully');
                 }).catch(err => {
-                    console.warn('Failed to resume audio context', err);
+                    Debug.warn('Failed to resume audio context', err);
                 });
             }
         } catch (error) {
-            console.error('Web Audio API is not supported in this browser', error);
+            Debug.error('Web Audio API is not supported in this browser', error);
         }
     }
     

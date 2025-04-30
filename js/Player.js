@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import Debug from './utils/Debug.js';
 
 export class Player {
     constructor() {
@@ -1133,7 +1134,7 @@ export class Player {
     }
     
     reset() {
-        console.log("Player reset called");
+        Debug.log("Player reset called");
         
         // Position the robot on the far left side of the screen with a small padding
         const leftPadding = 50; // Small padding from the left edge
@@ -1186,10 +1187,10 @@ export class Player {
             // Ensure the robot is visible
             this.robot.visible = true;
         } else {
-            console.warn("Robot model was not found during reset");
+            Debug.warn("Robot model was not found during reset");
             // Try to recreate the 3D model if needed
             if (this.sceneManager && !this.robot) {
-                console.log("Recreating 3D robot model");
+                Debug.log("Recreating 3D robot model");
                 this.setup3DModel();
             }
         }

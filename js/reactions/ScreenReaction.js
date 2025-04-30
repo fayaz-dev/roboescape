@@ -1,5 +1,6 @@
 import { ReactionBase } from './ReactionBase.js';
 import { ConsoleReactionMessages } from './ConsoleReactionMessages.js';
+import Debug from '../utils/Debug.js';
 
 export class ScreenReaction extends ReactionBase {
     constructor(player, sceneManager, starfield) {

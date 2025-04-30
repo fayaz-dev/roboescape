@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PlasmaParticlePool } from './utils/PlasmaParticlePool.js';
+import Debug from './utils/Debug.js';
 
 export class BlackHole {
     constructor() {
@@ -405,11 +406,11 @@ export class BlackHole {
 
     // Reset the blackhole to its initial state
     reset() {
-        console.log("BlackHole reset called");
+        Debug.log("BlackHole reset called");
         
         // Make sure scene manager is available
         if (!this.sceneManager) {
-            console.error("BlackHole reset: sceneManager not initialized");
+            Debug.error("BlackHole reset: sceneManager not initialized");
             return;
         }
         

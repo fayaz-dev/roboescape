@@ -1,6 +1,8 @@
+// filepath: /home/fayaz/lab/roboescape/js/ExoticParticles.js
 import * as THREE from 'three';
 import { ExoticParticleFactory } from './particles/ExoticParticleFactory.js';
 import { ObjectPool } from './utils/ObjectPool.js';
+import Debug from './utils/Debug.js';
 
 export class ExoticParticles {
     constructor() {
@@ -123,7 +125,7 @@ export class ExoticParticles {
     spawnParticle() {
         // Ensure sceneManager is available
         if (!this.sceneManager) {
-            console.error("SceneManager not available for spawning particles");
+            Debug.error("SceneManager not available for spawning particles");
             return;
         }
         
@@ -187,10 +189,10 @@ export class ExoticParticles {
             if (particle) {
                 this.particles.push(particle);
             } else {
-                console.error(`Failed to create ${particleType} particle`);
+                Debug.error(`Failed to create ${particleType} particle`);
             }
         } catch (error) {
-            console.error(`Error spawning particle: ${error.message}`);
+            Debug.error(`Error spawning particle: ${error.message}`);
         }
     }
     
@@ -257,11 +259,11 @@ export class ExoticParticles {
     }
     
     reset() {
-        console.log("ExoticParticles reset called");
+        Debug.log("ExoticParticles reset called");
         
         // Ensure sceneManager is available
         if (!this.sceneManager) {
-            console.error("ExoticParticles reset: sceneManager not initialized");
+            Debug.error("ExoticParticles reset: sceneManager not initialized");
             return;
         }
         
@@ -289,16 +291,16 @@ export class ExoticParticles {
         
         // Force immediate spawn of initial particles
         const initialCount = Math.ceil(this.particleCount * 0.7); // Spawn 70% of max particles initially
-        console.log(`Spawning ${initialCount} initial particles`);
+        Debug.log(`Spawning ${initialCount} initial particles`);
         
         // Spawn initial set of particles without throttling
         try {
             for (let i = 0; i < initialCount; i++) {
                 this.spawnParticle();
             }
-            console.log(`Successfully spawned ${this.particles.length} particles`);
+            Debug.log(`Successfully spawned ${this.particles.length} particles`);
         } catch (error) {
-            console.error("Error spawning initial particles:", error);
+            Debug.error("Error spawning initial particles:", error);
         }
     }
 }

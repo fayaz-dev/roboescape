@@ -1,6 +1,8 @@
 /**
  * Performance optimization utilities for the game
  */
+import Debug from './Debug.js';
+
 export class PerformanceOptimizer {
     constructor() {
         // FPS tracking
@@ -63,16 +65,16 @@ export class PerformanceOptimizer {
     adjustQuality() {
         if (this.fps < 30 && this.qualityLevel !== 'low') {
             this.qualityLevel = 'low';
-            console.log('⚡ Performance: Reducing quality to improve framerate');
+            Debug.log('⚡ Performance: Reducing quality to improve framerate');
         } else if (this.fps < 45 && this.qualityLevel === 'high') {
             this.qualityLevel = 'medium';
-            console.log('⚡ Performance: Reducing quality to medium');
+            Debug.log('⚡ Performance: Reducing quality to medium');
         } else if (this.fps > 58 && this.qualityLevel === 'low') {
             this.qualityLevel = 'medium';
-            console.log('⚡ Performance: Increasing quality to medium');
+            Debug.log('⚡ Performance: Increasing quality to medium');
         } else if (this.fps > 58 && this.qualityLevel === 'medium') {
             this.qualityLevel = 'high';
-            console.log('⚡ Performance: Increasing quality to high');
+            Debug.log('⚡ Performance: Increasing quality to high');
         }
     }
     

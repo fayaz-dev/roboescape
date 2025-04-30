@@ -4,6 +4,7 @@
  */
 import { PerformanceOptimizer } from './PerformanceOptimizer.js';
 import { ObjectPool } from './ObjectPool.js';
+import Debug from './Debug.js';
 
 // Create and export a single instance of the performance optimizer
 export const performanceOptimizer = new PerformanceOptimizer();
@@ -76,7 +77,7 @@ export function initPerformanceOptimizations(options = {}) {
         setInterval(() => {
             // This would typically be tied to the game's state
             // For now, just log the initialization
-            console.log('Performance optimization initialized');
+            Debug.log('Performance optimization initialized');
         }, PERFORMANCE_CONFIG.memory.cleanupInterval);
     }
     

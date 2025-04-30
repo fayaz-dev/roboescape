@@ -1,3 +1,5 @@
+import Debug from './utils/Debug.js';
+
 export class Settings {
     constructor() {
         this.isOpen = false;
@@ -34,7 +36,7 @@ export class Settings {
                     savedSettings.reactionsEnabled : true;
             }
         } catch (e) {
-            console.error("Error loading settings:", e);
+            Debug.error("Error loading settings:", e);
         }
     }
     
@@ -173,7 +175,7 @@ export class Settings {
             this.selectColor(index);
         } else {
             // If color is not in our predefined list, we could add it or ignore
-            console.log("Custom color not in predefined list:", cssColor);
+            Debug.log("Custom color not in predefined list:", cssColor);
         }
     }
     

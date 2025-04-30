@@ -1,6 +1,7 @@
 import { ReactionBase } from './ReactionBase.js';
 import { ConsoleReactionMessages } from './ConsoleReactionMessages.js';
 import { ConsoleReactionStyles } from './ConsoleReactionStyles.js';
+import Debug from '../utils/Debug.js';
 
 export class ConsoleReaction extends ReactionBase {
     constructor(player, sceneManager, starfield) {
