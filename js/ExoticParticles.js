@@ -5,7 +5,7 @@ import { ObjectPool } from './utils/ObjectPool.js';
 export class ExoticParticles {
     constructor() {
         this.shards = [];
-        this.shardCount = 10;
+        this.shardCount = 20;
         this.collectionRadius = 25;
         this.spawnTimer = 0;
         this.spawnInterval = 3; // seconds
@@ -170,12 +170,12 @@ export class ExoticParticles {
         const roll = Math.random() * 100;
         let particleType;
         
-        // Distribution: 60% normal, 25% unstable, 10% rare, 5% quantum
-        if (roll < 60) {
+        // Distribution: 50% normal, 25% unstable, 15% rare, 10% quantum
+        if (roll < 50) {
             particleType = 'normal';
-        } else if (roll < 85) {
+        } else if (roll < 75) {
             particleType = 'unstable';
-        } else if (roll < 95) {
+        } else if (roll < 90) {
             particleType = 'rare';
         } else {
             particleType = 'quantum';
@@ -256,9 +256,29 @@ export class ExoticParticles {
     }
     
     reset() {
+        console.log("ExoticParticles reset called");
+        
+        // Ensure sceneManager is available
+        if (!this.sceneManager) {
+            console.error("ExoticParticles reset: sceneManager not initialized");
+            return;
+        }
+        
         // Return all effects to the pool
         for (let i = 0; i < this.collectionEffects.length; i++) {
             this.effectPool.release(this.collectionEffects[i]);
+        }
+        
+        // Return active particles to pool if using pooling
+        if (this.particleFactory) {
+            for (let i = 0; i < this.shards.length; i++) {
+                const shard = this.shards[i];
+                if (shard) {
+                    // Mark as inactive but don't worry about returning to pool yet
+                    // The factory will handle this when creating new particles
+                    shard.active = false;
+                }
+            }
         }
         
         this.shards = [];
@@ -271,8 +291,13 @@ export class ExoticParticles {
         console.log(`Spawning ${initialCount} initial shards`);
         
         // Spawn initial set of shards without throttling
-        for (let i = 0; i < initialCount; i++) {
-            this.spawnShard();
+        try {
+            for (let i = 0; i < initialCount; i++) {
+                this.spawnShard();
+            }
+            console.log(`Successfully spawned ${this.shards.length} shards`);
+        } catch (error) {
+            console.error("Error spawning initial shards:", error);
         }
     }
 }

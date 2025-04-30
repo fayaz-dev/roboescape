@@ -362,6 +362,9 @@ export class GameController {
             }
         };
         
+        // Reinitialize event listeners to make sure they work after restart
+        this.reinitializeEventListeners();
+        
         // Most importantly, restart the game loop
         this.start();
         
@@ -373,6 +376,28 @@ export class GameController {
                 }
             }, 100);
         }
+    }
+    
+    // Reinitialize event listeners to make sure they work after restart
+    reinitializeEventListeners() {
+        // Remove existing event listeners to prevent duplicates
+        document.removeEventListener('keydown', this.player.handleKeydown);
+        document.removeEventListener('keyup', this.player.handleKeyup);
+        
+        // Re-bind event handlers with the correct context
+        this.player.handleKeydown = this.player.handleKeydown.bind(this.player);
+        this.player.handleKeyup = this.player.handleKeyup.bind(this.player);
+        
+        // Add new event listeners
+        document.addEventListener('keydown', this.player.handleKeydown);
+        document.addEventListener('keyup', this.player.handleKeyup);
+        
+        // Listen for particle collection events
+        window.addEventListener('particleCollected', (event) => {
+            if (this.player && typeof this.player.onParticleCollected === 'function') {
+                this.player.onParticleCollected(event.detail);
+            }
+        });
     }
     
     update(time) {
@@ -389,13 +414,27 @@ export class GameController {
     }
     
     start() {
+        console.log("GameController start called");
+        
         // Cancel any existing animation frame
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
         }
         
+        // Reset timing values
         this.lastTime = performance.now();
-        this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        this.lastUpdateTimestamp = performance.now();
+        
+        // Ensure game state is correct
+        this.gameOver = false;
+        this.gameActive = true;
+        
+        // Start the game loop
+        this.animationFrameId = requestAnimationFrame((timestamp) => {
+            console.log("Starting new game loop");
+            this.gameLoop(timestamp);
+        });
     }
     
     // New method to only animate background elements without gameplay
@@ -572,6 +611,14 @@ export class GameController {
             // Calculate accurate deltaTime with max value clamping to prevent huge jumps
             let deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1); // Cap at 100ms
             this.lastTime = currentTime;
+            
+            // Check if core game components are available
+            if (!this.sceneManager || !this.player || !this.blackHole || !this.dataShards) {
+                console.error("Critical game components missing in game loop");
+                // Try to continue anyway
+                this.animationFrameId = requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+                return;
+            }
             
             // Update performance metrics
             this.performanceOptimizer.measureFrameRate(currentTime);

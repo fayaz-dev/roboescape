@@ -44,6 +44,17 @@ export class SceneManager {
     }
     
     clear() {
+        // Ensure canvas context is valid
+        if (!this.ctx) {
+            console.error("Canvas context is null in SceneManager.clear()");
+            this.ctx = this.canvas.getContext('2d');
+            if (!this.ctx) {
+                console.error("Failed to recreate canvas context");
+                return;
+            }
+        }
+        
+        // Clear with transparency to create trailing effect
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
         this.ctx.fillRect(0, 0, this.width, this.height);
     }

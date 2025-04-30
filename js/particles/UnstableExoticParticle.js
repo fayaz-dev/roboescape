@@ -9,7 +9,7 @@ export class UnstableExoticParticle extends ExoticParticleBase {
         super(options);
         
         this.maxValue = 6; // Medium-high maximum value
-        this.value = Math.floor(Math.random() * 3) + 3; // Value between 3 and 5
+        this.value = Math.floor(Math.random() * (this.maxValue -3)) + 3; // Value between 3 and 6
         this.color = '#ff7700'; // Orange color for unstable particles
         
         this.flickerTimer = 0;

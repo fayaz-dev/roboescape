@@ -8,8 +8,8 @@ export class QuantumExoticParticle extends ExoticParticleBase {
     constructor(options) {
         super(options);
         
-        this.maxValue = 12; // Highest maximum value
-        this.value = Math.floor(Math.random() * 5) + 8; // Value between 8 and 12
+        this.maxValue = 15; // Highest maximum value
+        this.value = Math.floor(Math.random() * (this.maxValue - 8)) + 8; // Value between 8 and maxValue
         this.color = '#00ddff'; // Bright cyan for quantum particles
         
         this.phaseTime = 0;

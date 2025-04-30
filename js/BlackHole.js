@@ -405,6 +405,14 @@ export class BlackHole {
 
     // Reset the blackhole to its initial state
     reset() {
+        console.log("BlackHole reset called");
+        
+        // Make sure scene manager is available
+        if (!this.sceneManager) {
+            console.error("BlackHole reset: sceneManager not initialized");
+            return;
+        }
+        
         // Reset position
         this.x = this.sceneManager.centerX;
         this.y = this.sceneManager.centerY;
@@ -425,6 +433,25 @@ export class BlackHole {
         this.rotationOffset = 0;
         this.pulseFactor = 0;
         this.pulseSpeed = 0.5 + Math.random() * 0.5;
+        
+        // Clear and reset plasma particles
+        if (this.plasmaParticles) {
+            // Return all plasma particles to the pool
+            for (let i = 0; i < this.plasmaParticles.length; i++) {
+                if (this.plasmaPool) {
+                    this.plasmaPool.release(this.plasmaParticles[i]);
+                }
+            }
+            this.plasmaParticles = [];
+        }
+        
+        // Reset last shred time to ensure plasma jets appear immediately
+        this.lastShredTime = 0;
+        
+        // Re-initialize accretion disk if needed
+        if (this.accretionParticles && this.accretionParticles.length === 0) {
+            this.initAccretionDisk();
+        }
     }
 
     applyGravity(object, deltaTime) {

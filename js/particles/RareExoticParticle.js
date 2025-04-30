@@ -9,7 +9,7 @@ export class RareExoticParticle extends ExoticParticleBase {
         super(options);
         
         this.maxValue = 8; // Higher maximum value
-        this.value = Math.floor(Math.random() * 3) + 5; // Value between 5 and 7
+        this.value = Math.floor(Math.random() * (this.maxValue - 5)) + 5; // Value between 5 and maxValue
         this.color = '#ff00ff'; // Magenta color for rare particles
         this.pulseSpeed = 1.5; // Controls the speed of the pulsing effect
         this.pulseFactor = 0; // Current pulse phase
